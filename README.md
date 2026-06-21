@@ -1,140 +1,75 @@
-\# Kopi Wae - Coffee Shop Website
-
-
+# Kopi Wae - Coffee Shop Website
 
 Website pemesanan kopi online fullstack dengan React, Express, dan MySQL.
 
+## Tech Stack
 
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** Express.js + Node.js
+- **Database:** MySQL
+- **Auth:** JWT (JSON Web Token)
+- **Upload:** Multer
 
-\## Tech Stack
-
-
-
-\* \*\*Frontend:\*\* React + Vite + Tailwind CSS
-
-\* \*\*Backend:\*\* Express.js + Node.js
-
-\* \*\*Database:\*\* MySQL
-
-\* \*\*Auth:\*\* JWT (JSON Web Token)
-
-\* \*\*Upload:\*\* Multer
-
-
-
-\## Struktur Project
+## Struktur Project
 
 
 
 ```text
 
 kopi-wae/
-
 ├── kopi-wae-backend/        # Backend Express
-
 │   ├── config/              # Konfigurasi database
-
 │   ├── controllers/         # Logic endpoint
-
-│   ├── middleware/          # Auth middleware
-
+│   ├── middleware/            # Auth middleware
 │   ├── routes/              # API routes
-
 │   ├── uploads/             # Upload folder
-
 │   ├── index.js             # Entry point
-
 │   └── package.json
-
 │
-
 ├── project-web-coffee-shop/ # Frontend React
-
 │   ├── src/
-
-│   │   ├── pages/           # Halaman admin \& user
-
-│   │   ├── layouts/         # Layout admin \& user
-
+│   │   ├── pages/           # Halaman admin & user
+│   │   ├── layouts/         # Layout admin & user
 │   │   └── utils/           # API config
-
 │   ├── public/
-
 │   └── package.json
-
 │
-
 └── README.md
 
 ```
 
 
 
-\## Fitur
+## Fitur
 
+### User
+- Register & Login
+- Home (produk terbaru)
+- List produk + filter kategori
+- Detail produk
+- Keranjang (CRUD)
+- Checkout
+- Riwayat transaksi
+- Profil + upload foto
+- Popup logout
 
+### Admin
+- Dashboard dengan statistik & top kopi
+- Manajemen kategori (CRUD)
+- Manajemen produk (CRUD) + upload gambar
+- Manajemen pesanan (update status)
+- Manajemen pengguna (CRUD) + upload foto
+- Laporan penjualan + grafik + export CSV
+- Profil admin + upload foto
+- Popup logout
 
-\### User
+## Instalasi
 
-
-
-\* Register \& Login
-
-\* Home (produk terbaru)
-
-\* List produk + filter kategori
-
-\* Detail produk
-
-\* Keranjang (CRUD)
-
-\* Checkout
-
-\* Riwayat transaksi
-
-\* Profil + upload foto
-
-\* Popup logout
-
-
-
-\### Admin
-
-
-
-\* Dashboard dengan statistik \& top kopi
-
-\* Manajemen kategori (CRUD)
-
-\* Manajemen produk (CRUD) + upload gambar
-
-\* Manajemen pesanan (update status)
-
-\* Manajemen pengguna (CRUD) + upload foto
-
-\* Laporan penjualan + grafik + export CSV
-
-\* Profil admin + upload foto
-
-\* Popup logout
-
-
-
-\## Instalasi
-
-
-
-\### 1. Clone Repository
-
-
+### 1. Clone Repository
 
 ```bash
-
-git clone https://github.com/gemluak-oss/kopi-wae.git
-
+git clone [https://github.com/gemluak-oss/kopi-wae.git](https://github.com/gemluak-oss/kopi-wae.git)
 cd kopi-wae
-
-```
 
 
 
