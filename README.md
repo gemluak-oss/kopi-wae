@@ -351,6 +351,6 @@ CREATE DATABASE db_kopi_wae;
 ```
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+See the [LICENSE](LICENSE) file for details.
 
 Project dibuat untuk kebutuhan tugas kuliah dan pembelajaran pengembangan aplikasi web fullstack menggunakan React, Express, dan MySQL.
