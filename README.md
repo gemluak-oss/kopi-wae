@@ -12,12 +12,12 @@ Website pemesanan kopi online fullstack dengan React, Express, dan MySQL.
 
 ## Struktur Project
 
-```
+```text
 kopi-wae/
 ├── kopi-wae-backend/        # Backend Express
 │   ├── config/              # Konfigurasi database
 │   ├── controllers/         # Logic endpoint
-│   ├── middleware/            # Auth middleware
+│   ├── middleware/          # Auth middleware
 │   ├── routes/              # API routes
 │   ├── uploads/             # Upload folder
 │   ├── index.js             # Entry point
@@ -74,7 +74,7 @@ Buat database baru di MySQL:
 CREATE DATABASE db_kopi_wae;
 ```
 
-Jalankan script SQL untuk membuat tabel:
+Jalankan script SQL berikut untuk membuat tabel:
 
 ```sql
 -- USER table
@@ -101,7 +101,7 @@ CREATE TABLE KOPI (
     id_kopi INT NOT NULL AUTO_INCREMENT,
     id_kategori INT NOT NULL,
     nama_kopi VARCHAR(255) NOT NULL,
-    harga_kopi DECIMAL(10, 2) NOT NULL,
+    harga_kopi DECIMAL(10,2) NOT NULL,
     stok INT NOT NULL DEFAULT 0,
     stok_minimal INT NOT NULL DEFAULT 0,
     gambar VARCHAR(500),
@@ -133,7 +133,7 @@ CREATE TABLE TRANSAKSI (
     id_transaksi INT NOT NULL AUTO_INCREMENT,
     id_user INT NOT NULL,
     tgl_transaksi DATETIME NOT NULL,
-    total_harga DECIMAL(10, 2) NOT NULL,
+    total_harga DECIMAL(10,2) NOT NULL,
     status_pesanan VARCHAR(100) NOT NULL DEFAULT 'menunggu',
     PRIMARY KEY (id_transaksi),
     FOREIGN KEY (id_user) REFERENCES USER(id_user)
@@ -145,8 +145,8 @@ CREATE TABLE DETAIL_TRANSAKSI (
     id_transaksi INT NOT NULL,
     id_kopi INT NOT NULL,
     qty INT NOT NULL,
-    harga_saat_ini DECIMAL(10, 2) NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL,
+    harga_saat_ini DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (id_detail),
     FOREIGN KEY (id_transaksi) REFERENCES TRANSAKSI(id_transaksi),
     FOREIGN KEY (id_kopi) REFERENCES KOPI(id_kopi)
@@ -164,15 +164,20 @@ CREATE TABLE PEMBAYARAN (
 );
 ```
 
-Insert data dummy:
+### Insert Data Dummy
 
 ```sql
 -- Kategori
-INSERT INTO KATEGORI (nama_kategori) VALUES 
-('Single Origin'), ('Blend'), ('Espresso Based'), ('Manual Brew');
+INSERT INTO KATEGORI (nama_kategori) VALUES
+('Single Origin'),
+('Blend'),
+('Espresso Based'),
+('Manual Brew');
 
 -- Produk
-INSERT INTO KOPI (id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar) VALUES
+INSERT INTO KOPI
+(id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar)
+VALUES
 (1, 'Kopi Gayo Aceh', 35000, 100, 10, 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400'),
 (1, 'Kopi Toraja', 40000, 80, 10, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400'),
 (2, 'House Blend', 30000, 120, 10, 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400'),
@@ -188,10 +193,30 @@ INSERT INTO KOPI (id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar
 ```bash
 cd kopi-wae-backend
 npm install
+```
+
+Dependencies yang terinstall:
+- `express` - Web framework
+- `cors` - Cross-Origin Resource Sharing
+- `mysql2` - MySQL driver
+- `dotenv` - Environment variables
+- `bcryptjs` - Password hashing
+- `jsonwebtoken` - JWT authentication
+- `multer` - File upload
+
+Jalankan server:
+
+```bash
 npm run dev
 ```
 
-Server berjalan di `http://localhost:5000`
+Server berjalan di:
+
+```text
+http://localhost:5000
+```
+
+**Catatan:** Folder `uploads/` akan dibuat otomatis untuk menyimpan gambar yang diupload. Pastikan folder ini *writable*.
 
 ### 4. Setup Frontend
 
@@ -201,53 +226,62 @@ npm install
 npm run dev
 ```
 
-Frontend berjalan di `http://localhost:5173`
+Frontend berjalan di:
+
+```text
+http://localhost:5173
+```
 
 ## Default Admin Account
 
-Setelah register, ubah role user jadi admin di database:
+Setelah register, ubah role user menjadi admin di database:
 
 ```sql
-UPDATE USER SET role = 'admin' WHERE email = 'admin@kopiwae.com';
+UPDATE USER
+SET role = 'admin'
+WHERE email = 'admin@kopiwae.com';
 ```
 
-| Role | Email | Password |
-|------|-------|----------|
+| Role  | Email             | Password |
+| ----- | ----------------- | -------- |
 | Admin | admin@kopiwae.com | admin123 |
 
 ## API Endpoints
 
 ### Auth
-- `POST /api/user/register` - Register
-- `POST /api/user/login` - Login
+
+- `POST /api/user/register`
+- `POST /api/user/login`
 
 ### User
-- `GET /api/user/beranda` - Produk terbaru
-- `GET /api/user/produk` - Semua produk
-- `GET /api/user/produk/:id` - Detail produk
-- `GET /api/user/kategori` - Kategori
-- `GET /api/user/keranjang/:userId` - Lihat keranjang
-- `POST /api/user/keranjang` - Tambah keranjang
-- `PUT /api/user/keranjang/:id` - Update qty
-- `DELETE /api/user/keranjang/:id` - Hapus item
-- `POST /api/user/checkout` - Checkout
-- `GET /api/user/history/:userId` - Riwayat
-- `GET /api/user/profil/:userId` - Profil
-- `PUT /api/user/profil/:userId` - Update profil
+
+- `GET /api/user/beranda`
+- `GET /api/user/produk`
+- `GET /api/user/produk/:id`
+- `GET /api/user/kategori`
+- `GET /api/user/keranjang/:userId`
+- `POST /api/user/keranjang`
+- `PUT /api/user/keranjang/:id`
+- `DELETE /api/user/keranjang/:id`
+- `POST /api/user/checkout`
+- `GET /api/user/history/:userId`
+- `GET /api/user/profil/:userId`
+- `PUT /api/user/profil/:userId`
 
 ### Admin
-- `GET /api/admin/dashboard` - Dashboard
-- `GET/POST/PUT/DELETE /api/admin/kategori` - CRUD Kategori
-- `GET/POST/PUT/DELETE /api/admin/produk` - CRUD Produk
-- `GET/PUT /api/admin/pesanan` - Kelola Pesanan
-- `GET/POST/PUT/DELETE /api/admin/users` - CRUD User
-- `GET /api/admin/laporan` - Laporan Penjualan
+
+- `GET /api/admin/dashboard`
+- `GET/POST/PUT/DELETE /api/admin/kategori`
+- `GET/POST/PUT/DELETE /api/admin/produk`
+- `GET/PUT /api/admin/pesanan`
+- `GET/POST/PUT/DELETE /api/admin/users`
+- `GET /api/admin/laporan`
 
 ## Environment Variables
 
-Buat file `.env` di `kopi-wae-backend/`:
+Buat file `.env` di folder `kopi-wae-backend/`
 
-```
+```env
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
@@ -255,6 +289,67 @@ DB_NAME=db_kopi_wae
 JWT_SECRET=kopi_wae_secret_key_2024
 ```
 
-## License
+## Konfigurasi Database
 
-MIT - Project Tugas Kuliah
+Edit file `kopi-wae-backend/config/db.js`:
+
+```javascript
+const mysql = require('mysql2');
+
+const db = mysql.createConnection({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'db_kopi_wae'
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Database connection failed:', err);
+    return;
+  }
+  console.log('Database connected!');
+});
+
+module.exports = db;
+```
+
+## Troubleshooting
+
+### Port sudah digunakan
+Jika port 5000 sudah dipakai, ubah di `kopi-wae-backend/index.js`:
+```javascript
+const PORT = 5000; // ganti ke 5001 atau lainnya
+```
+
+### Nodemon tidak ditemukan
+```bash
+npm install -g nodemon
+```
+
+### Koneksi database gagal
+- Pastikan MySQL sudah berjalan (XAMPP/Laragon)
+- Cek username & password di `config/db.js` atau `.env`
+- Pastikan database `db_kopi_wae` sudah dibuat
+
+### Token expired / 401 Unauthorized
+- Logout lalu login kembali
+- Token JWT expired setelah 1 hari
+
+### Upload gambar gagal
+- Pastikan folder `uploads/` ada di `kopi-wae-backend/`
+- Cek limit file size di `index.js` (default 50MB)
+
+## Cara Reset Database
+
+Jika ada masalah dengan data, Anda bisa mereset database dengan cara berikut:
+
+```sql
+DROP DATABASE db_kopi_wae;
+CREATE DATABASE db_kopi_wae;
+-- Kemudian jalankan ulang script CREATE TABLE + INSERT data dummy di atas
+```
+## License
+MIT License
+
+Project dibuat untuk kebutuhan tugas kuliah dan pembelajaran pengembangan aplikasi web fullstack menggunakan React, Express, dan MySQL.
