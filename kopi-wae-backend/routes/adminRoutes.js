@@ -20,7 +20,23 @@ router.delete("/kategori/:id", adminController.hapusKategori);
 router.get("/produk", adminController.getAllProdukAdmin);
 router.post("/produk", adminController.tambahProduk);
 router.put("/produk/:id", adminController.editProduk);
-router.delete("/produk/:id", adminController.hapusProduk);
+
+// GANTI DELETE PRODUK JADI:
+router.delete("/produk/:id", (req, res) => {
+  const { id } = req.params;
+
+  // Hapus detail transaksi dulu
+  db.query("DELETE FROM DETAIL_TRANSAKSI WHERE id_kopi = ?", [id], (err) => {
+    // Hapus item keranjang
+    db.query("DELETE FROM ITEM_KERANJANG WHERE id_kopi = ?", [id], (err) => {
+      // Baru hapus produk
+      db.query("DELETE FROM KOPI WHERE id_kopi = ?", [id], (err) => {
+        if (err) return res.status(500).json({ message: "Gagal menghapus produk", error: err });
+        res.json({ message: "Produk berhasil dihapus" });
+      });
+    });
+  });
+});
 
 // Pesanan
 router.get("/pesanan", adminController.getAllPesanan);
