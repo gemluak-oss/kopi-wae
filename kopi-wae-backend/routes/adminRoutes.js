@@ -4,7 +4,6 @@ const adminController = require("../controllers/adminController");
 const authMiddleware = require("../middleware/authMiddleware");
 const db = require("../config/db");
 
-// Protect all admin routes
 router.use(authMiddleware);
 
 // Dashboard
@@ -20,18 +19,12 @@ router.delete("/kategori/:id", adminController.hapusKategori);
 router.get("/produk", adminController.getAllProdukAdmin);
 router.post("/produk", adminController.tambahProduk);
 router.put("/produk/:id", adminController.editProduk);
-
-// GANTI DELETE PRODUK JADI:
 router.delete("/produk/:id", (req, res) => {
   const { id } = req.params;
-
-  // Hapus detail transaksi dulu
   db.query("DELETE FROM DETAIL_TRANSAKSI WHERE id_kopi = ?", [id], (err) => {
-    // Hapus item keranjang
     db.query("DELETE FROM ITEM_KERANJANG WHERE id_kopi = ?", [id], (err) => {
-      // Baru hapus produk
       db.query("DELETE FROM KOPI WHERE id_kopi = ?", [id], (err) => {
-        if (err) return res.status(500).json({ message: "Gagal menghapus produk", error: err });
+        if (err) return res.status(500).json({ message: "Gagal menghapus produk" });
         res.json({ message: "Produk berhasil dihapus" });
       });
     });
@@ -90,18 +83,34 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
-// Users - DELETE
+// Users - DELETE (FIX)
 router.delete("/users/:id", (req, res) => {
+  const { id } = req.params;
+
   db.query("SELECT COUNT(*) AS total FROM USER WHERE role = 'admin'", (err, result) => {
     if (err) return res.status(500).json({ message: "Error" });
-    db.query("SELECT role FROM USER WHERE id_user = ?", [req.params.id], (err, user) => {
+
+    db.query("SELECT role FROM USER WHERE id_user = ?", [id], (err, user) => {
       if (err || user.length === 0) return res.status(500).json({ message: "Error" });
+
       if (user[0].role === "admin" && result[0].total <= 1) {
         return res.status(400).json({ message: "Tidak bisa menghapus admin terakhir!" });
       }
-      db.query("DELETE FROM USER WHERE id_user = ?", [req.params.id], (err) => {
-        if (err) return res.status(500).json({ message: "Error" });
-        res.json({ message: "User dihapus" });
+
+      // Hapus data terkait
+      db.query("DELETE FROM DETAIL_TRANSAKSI WHERE id_transaksi IN (SELECT id_transaksi FROM TRANSAKSI WHERE id_user = ?)", [id], (err) => {
+        db.query("DELETE FROM PEMBAYARAN WHERE id_transaksi IN (SELECT id_transaksi FROM TRANSAKSI WHERE id_user = ?)", [id], (err) => {
+          db.query("DELETE FROM TRANSAKSI WHERE id_user = ?", [id], (err) => {
+            db.query("DELETE FROM ITEM_KERANJANG WHERE id_keranjang IN (SELECT id_keranjang FROM KERANJANG WHERE id_user = ?)", [id], (err) => {
+              db.query("DELETE FROM KERANJANG WHERE id_user = ?", [id], (err) => {
+                db.query("DELETE FROM USER WHERE id_user = ?", [id], (err) => {
+                  if (err) return res.status(500).json({ message: "Error" });
+                  res.json({ message: "User dihapus" });
+                });
+              });
+            });
+          });
+        });
       });
     });
   });

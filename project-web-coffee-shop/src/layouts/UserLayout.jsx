@@ -10,12 +10,17 @@ const UserLayout = ({ role, onLogout }) => {
 
   const hitungKeranjang = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || role !== "user") {
+    const token = localStorage.getItem("token"); // 👈 TAMBAH INI
+
+    if (!user || !token || role !== "user") {
+      // 👈 CEK TOKEN
       setJumlahKeranjang(0);
       return;
     }
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/keranjang/${user.id}`);
+      const res = await axios.get(`http://localhost:5000/api/user/keranjang/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }, // 👈 TAMBAH HEADER
+      });
       const total = res.data.data.items.reduce((sum, item) => sum + item.qty, 0);
       setJumlahKeranjang(total);
     } catch (err) {

@@ -66,15 +66,23 @@ const DetailProduk = () => {
       return;
     }
 
+    const token = localStorage.getItem("token"); // 👈 TAMBAH
+
     try {
-      await axios.post("http://localhost:5000/api/user/keranjang", {
-        userId: user.id,
-        kopiId: produkAktif.id_kopi,
-        qty: jumlah,
-      });
+      await axios.post(
+        "http://localhost:5000/api/user/keranjang",
+        {
+          userId: user.id,
+          kopiId: produkAktif.id_kopi,
+          qty: jumlah,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }, // 👈 TAMBAH
+        },
+      );
 
       window.dispatchEvent(new Event("keranjangChanged"));
-      alert(`${produkAktif.nama_kopi} (${jumlah}x) berhasil ditambahkan ke keranjang!`);
+      alert(`${produkAktif.nama_kopi} (${jumlah}x) berhasil ditambahkan!`);
     } catch (err) {
       alert(err.response?.data?.message || "Gagal menambahkan ke keranjang");
     }
