@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function ProfilAdmin() {
+export default function ProfilAdmin({ isDark }) {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [preview, setPreview] = useState(null);
   const [formData, setFormData] = useState({ user_name: "", email: "", no_hp: "" });
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const userLogin = JSON.parse(localStorage.getItem("user")) || null;
-  const token = localStorage.getItem("token");
+  // Konfigurasi Variabel Dark Mode & Neo-Brutalism
+  const b = isDark ? "border-white" : "border-[#1A1A1A]";
+  const bg = isDark ? "bg-gray-950 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
+  const cardBg = isDark ? "bg-gray-900" : "bg-white";
+  const shadow = isDark ? "shadow-white" : "shadow-[4px_4px_0px_0px_#1A1A1A]";
+  const shadowCard = isDark ? "shadow-white" : "shadow-[6px_6px_0px_0px_#1A1A1A]";
+  const shadowBtn = isDark ? "shadow-white" : "shadow-[3px_3px_0px_0px_#1A1A1A]";
+  const inputBg = isDark ? "bg-gray-800 text-white" : "bg-[#FFFDF6] text-[#1A1A1A]";
+  const textContainerBg = isDark ? "bg-gray-800/60" : "bg-[#EAE8E1]/40";
 
   useEffect(() => {
     fetchProfil();
@@ -17,6 +24,11 @@ export default function ProfilAdmin() {
 
   const fetchProfil = async () => {
     try {
+      const userLogin = JSON.parse(localStorage.getItem("user")) || null;
+      const token = localStorage.getItem("token");
+
+      if (!userLogin?.id) return;
+
       const res = await axios.get(`http://localhost:5000/api/user/profil/${userLogin.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -30,6 +42,9 @@ export default function ProfilAdmin() {
 
   const handleSave = async () => {
     try {
+      const userLogin = JSON.parse(localStorage.getItem("user")) || null;
+      const token = localStorage.getItem("token");
+
       let fotoUrl = preview;
       if (selectedFile) {
         const formImg = new FormData();
@@ -64,67 +79,116 @@ export default function ProfilAdmin() {
     }
   };
 
-  if (!user) return <div className="p-8 text-center">Loading...</div>;
+  if (!user) {
+    return (
+      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
+        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-xs uppercase tracking-widest ${shadow}`}>Sinkronisasi Profil</div>
+      </main>
+    );
+  }
 
   return (
-    <main className="p-4 md:p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-stone-800 mb-6">Profil Saya</h1>
-      <div className="bg-white rounded-2xl shadow-sm border p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-32 h-32 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden mb-4">
-            {preview ? <img src={preview} alt="" className="w-full h-full object-cover" /> : <span className="text-4xl font-bold text-amber-600">{user.user_name?.charAt(0)}</span>}
-          </div>
-          {isEditing && (
-            <label className="bg-amber-600 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-amber-700">
-              Ganti Foto
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setSelectedFile(file);
-                    setPreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
-            </label>
-          )}
+    <main className={`p-6 min-h-screen font-mono flex flex-col items-center justify-center ${bg}`}>
+      <div className="w-full max-w-xl space-y-6">
+        {/* PAGE TITLE */}
+        <div className="text-center md:text-left">
+          <h1 className="text-2xl font-black uppercase tracking-tight">Profil Saya</h1>
+          <p className="text-xs font-bold uppercase opacity-60 mt-1">Konfigurasi data diri institusi operator</p>
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-stone-400 uppercase">Nama</label>
-            {isEditing ? (
-              <input type="text" value={formData.user_name} onChange={(e) => setFormData({ ...formData, user_name: e.target.value })} className="w-full border rounded-lg p-2 mt-1" />
-            ) : (
-              <p className="text-lg font-bold">{user.user_name}</p>
+
+        {/* MAIN PROFILE CARD */}
+        <div className={`${cardBg} border-4 ${b} p-6 md:p-8 shadow-[6px_6px_0px_0px] ${shadowCard}`}>
+          {/* AVATAR UPLOAD COMPONENT */}
+          <div className="flex flex-col items-center mb-8 space-y-4">
+            <div className={`w-32 h-32 border-4 ${b} bg-[#FFFDF6] flex items-center justify-center overflow-hidden shadow-[4px_4px_0px_0px] ${shadow}`}>
+              {preview ? <img src={preview} alt="" className="w-full h-full object-cover" /> : <span className={`text-4xl font-black ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>{user.user_name?.charAt(0).toUpperCase()}</span>}
+            </div>
+
+            {isEditing && (
+              <label
+                className={`px-4 py-2 border-2 ${b} bg-[#FFC700] text-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px] ${isDark ? "shadow-white" : "shadow-[#1A1A1A]"} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer`}
+              >
+                Ganti Foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      setPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </label>
             )}
           </div>
-          <div>
-            <label className="text-xs font-bold text-stone-400 uppercase">Email</label>
-            {isEditing ? <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full border rounded-lg p-2 mt-1" /> : <p className="text-lg">{user.email}</p>}
+
+          {/* FORM FIELDS */}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5 opacity-60">Nama Lengkap</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData.user_name}
+                  onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
+                  className={`w-full border-2 ${b} p-2.5 text-xs font-bold uppercase tracking-wide focus:outline-none ${inputBg}`}
+                />
+              ) : (
+                <div className={`p-2.5 border-2 border-transparent font-black text-sm uppercase ${textContainerBg}`}>{user.user_name}</div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5 opacity-60">Alamat Email</label>
+              {isEditing ? (
+                <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className={`w-full border-2 ${b} p-2.5 text-xs font-bold focus:outline-none ${inputBg}`} />
+              ) : (
+                <div className={`p-2.5 border-2 border-transparent font-mono text-sm ${textContainerBg}`}>{user.email}</div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5 opacity-60">Nomor Telepon / Kontak</label>
+              {isEditing ? (
+                <input type="text" value={formData.no_hp} onChange={(e) => setFormData({ ...formData, no_hp: e.target.value })} className={`w-full border-2 ${b} p-2.5 text-xs font-bold focus:outline-none ${inputBg}`} />
+              ) : (
+                <div className={`p-2.5 border-2 border-transparent font-mono text-sm ${textContainerBg}`}>{user.no_hp || "—"}</div>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-bold text-stone-400 uppercase">No. HP</label>
-            {isEditing ? <input type="text" value={formData.no_hp} onChange={(e) => setFormData({ ...formData, no_hp: e.target.value })} className="w-full border rounded-lg p-2 mt-1" /> : <p className="text-lg">{user.no_hp || "-"}</p>}
+
+          {/* ACTION BUTTONS */}
+          <div className={`mt-8 pt-4 border-t-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"} flex gap-3`}>
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  className={`px-5 py-2.5 border-2 ${b} bg-[#00F5D4] text-black font-black text-xs uppercase tracking-widest shadow-[3px_3px_0px_0px] ${shadowBtn} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                >
+                  Simpan
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setPreview(user.foto || null);
+                  }}
+                  className={`px-5 py-2.5 border-2 ${b} bg-[#FF6B6B] text-black font-black text-xs uppercase tracking-widest shadow-[3px_3px_0px_0px] ${shadowBtn} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                >
+                  Batal
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className={`w-full sm:w-auto px-6 py-3 border-2 ${b} bg-[#A1A1FF] text-black font-black text-xs uppercase tracking-widest shadow-[3px_3px_0px_0px] ${shadowBtn} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+              >
+                Edit Konten Profil
+              </button>
+            )}
           </div>
-        </div>
-        <div className="mt-6 flex gap-3">
-          {isEditing ? (
-            <>
-              <button onClick={handleSave} className="bg-amber-600 text-white px-6 py-2 rounded-lg font-medium">
-                Simpan
-              </button>
-              <button onClick={() => setIsEditing(false)} className="border px-6 py-2 rounded-lg">
-                Batal
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setIsEditing(true)} className="bg-stone-800 text-white px-6 py-2 rounded-lg font-medium">
-              Edit Profil
-            </button>
-          )}
         </div>
       </div>
     </main>

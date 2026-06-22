@@ -35,7 +35,7 @@ router.delete("/produk/:id", (req, res) => {
 router.get("/pesanan", adminController.getAllPesanan);
 router.put("/pesanan/:id", adminController.updateStatusPesanan);
 
-// Users - GET
+// Users
 router.get("/users", (req, res) => {
   const { role } = req.query;
   let query = "SELECT id_user, user_name, email, role, no_hp, foto FROM USER";
@@ -51,7 +51,6 @@ router.get("/users", (req, res) => {
   });
 });
 
-// Users - POST
 router.post("/users", async (req, res) => {
   const { user_name, email, password, role, no_hp } = req.body;
   if (!user_name || !email || !password) return res.status(400).json({ message: "Nama, email, password wajib" });
@@ -64,7 +63,6 @@ router.post("/users", async (req, res) => {
   });
 });
 
-// Users - PUT
 router.put("/users/:id", async (req, res) => {
   const { user_name, email, password, role, no_hp, foto } = req.body;
   if (password) {
@@ -83,21 +81,13 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
-// Users - DELETE (FIX)
 router.delete("/users/:id", (req, res) => {
   const { id } = req.params;
-
   db.query("SELECT COUNT(*) AS total FROM USER WHERE role = 'admin'", (err, result) => {
     if (err) return res.status(500).json({ message: "Error" });
-
     db.query("SELECT role FROM USER WHERE id_user = ?", [id], (err, user) => {
       if (err || user.length === 0) return res.status(500).json({ message: "Error" });
-
-      if (user[0].role === "admin" && result[0].total <= 1) {
-        return res.status(400).json({ message: "Tidak bisa menghapus admin terakhir!" });
-      }
-
-      // Hapus data terkait
+      if (user[0].role === "admin" && result[0].total <= 1) return res.status(400).json({ message: "Tidak bisa menghapus admin terakhir!" });
       db.query("DELETE FROM DETAIL_TRANSAKSI WHERE id_transaksi IN (SELECT id_transaksi FROM TRANSAKSI WHERE id_user = ?)", [id], (err) => {
         db.query("DELETE FROM PEMBAYARAN WHERE id_transaksi IN (SELECT id_transaksi FROM TRANSAKSI WHERE id_user = ?)", [id], (err) => {
           db.query("DELETE FROM TRANSAKSI WHERE id_user = ?", [id], (err) => {
@@ -113,6 +103,38 @@ router.delete("/users/:id", (req, res) => {
         });
       });
     });
+  });
+});
+
+// ==================== VOUCHER ====================
+router.get("/voucher", (req, res) => {
+  db.query("SELECT * FROM VOUCHER ORDER BY id_voucher DESC", (err, results) => {
+    if (err) return res.status(500).json({ message: "Error" });
+    res.json({ data: results });
+  });
+});
+
+router.post("/voucher", (req, res) => {
+  const { kode, diskon_persen, max_diskon, min_belanja, kuota } = req.body;
+  if (!kode || !diskon_persen) return res.status(400).json({ message: "Kode & diskon wajib" });
+  db.query("INSERT INTO VOUCHER (kode, diskon_persen, max_diskon, min_belanja, kuota) VALUES (?, ?, ?, ?, ?)", [kode.toUpperCase(), diskon_persen, max_diskon || null, min_belanja || 0, kuota || 100], (err) => {
+    if (err) return res.status(500).json({ message: "Error" });
+    res.status(201).json({ message: "Voucher ditambahkan" });
+  });
+});
+
+router.put("/voucher/:id", (req, res) => {
+  const { kode, diskon_persen, max_diskon, min_belanja, kuota } = req.body;
+  db.query("UPDATE VOUCHER SET kode=?, diskon_persen=?, max_diskon=?, min_belanja=?, kuota=? WHERE id_voucher=?", [kode.toUpperCase(), diskon_persen, max_diskon, min_belanja, kuota, req.params.id], (err) => {
+    if (err) return res.status(500).json({ message: "Error" });
+    res.json({ message: "Voucher diupdate" });
+  });
+});
+
+router.delete("/voucher/:id", (req, res) => {
+  db.query("DELETE FROM VOUCHER WHERE id_voucher = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).json({ message: "Error" });
+    res.json({ message: "Voucher dihapus" });
   });
 });
 

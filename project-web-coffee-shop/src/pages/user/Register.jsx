@@ -29,7 +29,7 @@ export default function Register() {
     setPesan({ tipe: "", teks: "" });
 
     if (!formData.user_name.trim() || !formData.email.trim() || !formData.password.trim()) {
-      setPesan({ tipe: "error", teks: "Nama, email, dan password wajib diisi." });
+      setPesan({ tipe: "error", teks: "NAMA, EMAIL, DAN PASSWORD WAJIB DIISI!" });
       return;
     }
 
@@ -37,92 +37,99 @@ export default function Register() {
 
     try {
       await axios.post("http://localhost:5000/api/user/register", formData);
-      setPesan({ tipe: "success", teks: "Registrasi berhasil! Silakan login." });
+      setPesan({ tipe: "success", teks: "REGISTRASI BERHASIL! SILAKAN LOGIN." });
       setTimeout(() => navigate("/login"), 1000);
     } catch (err) {
-      setPesan({ tipe: "error", teks: err.response?.data?.message || "Gagal mendaftar" });
+      setPesan({
+        tipe: "error",
+        teks: err.response?.data?.message?.toUpperCase() || "GAGAL MENDAFTAR",
+      });
     } finally {
       setLoadingRegister(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-stone-100 flex items-center justify-center px-4 py-10 font-sans">
-      <div className="w-full max-w-md bg-white rounded-[2rem] shadow-xl overflow-hidden border border-stone-200">
-        <div className="bg-stone-900 px-8 py-10 text-center relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-600/20 rounded-full blur-xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-stone-500/20 rounded-full blur-xl"></div>
-
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-2xl mb-4 shadow-lg cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate("/home")}>
+    <main className="min-h-screen bg-[#EAE8E1] flex items-center justify-center px-4 py-12 font-mono text-[#1A1A1A]">
+      <div className="w-full max-w-lg border-4 border-[#1A1A1A] bg-[#FFFDF6] shadow-[10px_10px_0px_0px_#1A1A1A]">
+        {/* === HEADER BRANDING === */}
+        <div className="bg-[#FFC700] p-6 text-center border-b-4 border-[#1A1A1A] relative">
+          <div className="flex flex-col items-center">
+            <div
+              className="w-12 h-12 border-3 border-[#1A1A1A] bg-[#00F5D4] text-black flex items-center justify-center font-black text-xl mb-3 shadow-[3px_3px_0px_0px_#1A1A1A] cursor-pointer hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+              onClick={() => navigate("/home")}
+            >
               ☕
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-wide">Buat Akun</h2>
-            <p className="text-stone-400 mt-2 text-sm leading-relaxed">Daftar untuk menyimpan menu favorit dan nikmati layanan dari Kopi Wae.</p>
+            <h2 className="text-2xl font-black uppercase tracking-tight">Buat Akun</h2>
+            <p className="text-xs font-bold uppercase opacity-80 mt-1 max-w-sm leading-relaxed">Daftar untuk menyimpan menu favorit dan nikmati layanan dari Kopi Wae.</p>
           </div>
         </div>
 
-        <div className="p-8">
-          {pesan.teks && (
-            <div className={`mb-6 rounded-xl p-4 text-sm font-semibold text-center transition-all ${pesan.tipe === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
-              {pesan.teks}
-            </div>
-          )}
+        {/* === FORM CONTAINER === */}
+        <div className="p-6 md:p-8">
+          {/* NOTIFIKASI PESAN */}
+          {pesan.teks && <div className={`mb-6 border-3 border-[#1A1A1A] p-4 text-xs font-black text-center tracking-wide shadow-[3px_3px_0px_0px_#1A1A1A] ${pesan.tipe === "success" ? "bg-[#00F5D4]" : "bg-[#FF6B6B]"}`}>{pesan.teks}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
             <div>
-              <label className="block text-sm font-semibold text-stone-800 mb-2">Nama Lengkap</label>
+              <label className="block text-xs font-black uppercase tracking-wider mb-2">Nama Lengkap</label>
               <input
                 type="text"
                 name="user_name"
                 value={formData.user_name}
                 onChange={handleChange}
                 placeholder="cth: Jonathan Doe"
-                className="w-full border border-stone-300 rounded-xl px-4 py-3 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-600/20 transition-all text-sm"
+                className="w-full border-4 border-[#1A1A1A] bg-white p-3.5 text-sm font-bold placeholder-[#1A1A1A]/40 outline-none focus:bg-[#FFFDF6] focus:ring-4 focus:ring-[#00F5D4] transition-all disabled:opacity-50"
                 disabled={loadingRegister}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-stone-800 mb-2">Email</label>
+              <label className="block text-xs font-black uppercase tracking-wider mb-2">Alamat Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="cth: coffee@email.com"
-                className="w-full border border-stone-300 rounded-xl px-4 py-3 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-600/20 transition-all text-sm"
+                className="w-full border-4 border-[#1A1A1A] bg-white p-3.5 text-sm font-bold placeholder-[#1A1A1A]/40 outline-none focus:bg-[#FFFDF6] focus:ring-4 focus:ring-[#00F5D4] transition-all disabled:opacity-50"
                 disabled={loadingRegister}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-stone-800 mb-2">Password</label>
-              <div className="relative">
+              <label className="block text-xs font-black uppercase tracking-wider mb-2">Kata Sandi (Password)</label>
+              <div className="relative flex items-center">
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Buat password yang kuat"
-                  className="w-full border border-stone-300 rounded-xl px-4 py-3 pr-20 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-600/20 transition-all text-sm"
+                  className="w-full border-4 border-[#1A1A1A] bg-white p-3.5 pr-28 text-sm font-bold placeholder-[#1A1A1A]/40 outline-none focus:bg-[#FFFDF6] focus:ring-4 focus:ring-[#00F5D4] transition-all disabled:opacity-50"
                   disabled={loadingRegister}
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-amber-600 font-bold hover:text-amber-700" disabled={loadingRegister}>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 border-2 border-[#1A1A1A] bg-[#EAE8E1] hover:bg-[#A1A1FF] active:bg-[#00F5D4] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors z-10"
+                  disabled={loadingRegister}
+                >
                   {showPassword ? "Sembunyi" : "Lihat"}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-stone-800 mb-2">No. HP (Opsional)</label>
+              <label className="block text-xs font-black uppercase tracking-wider mb-2">No. HP (Opsional)</label>
               <input
                 type="text"
                 name="no_hp"
                 value={formData.no_hp}
                 onChange={handleChange}
                 placeholder="cth: 08123456789"
-                className="w-full border border-stone-300 rounded-xl px-4 py-3 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-600/20 transition-all text-sm"
+                className="w-full border-4 border-[#1A1A1A] bg-white p-3.5 text-sm font-bold placeholder-[#1A1A1A]/40 outline-none focus:bg-[#FFFDF6] focus:ring-4 focus:ring-[#00F5D4] transition-all disabled:opacity-50"
                 disabled={loadingRegister}
               />
             </div>
@@ -130,15 +137,17 @@ export default function Register() {
             <button
               type="submit"
               disabled={loadingRegister}
-              className={`w-full mt-2 py-3.5 rounded-xl font-bold tracking-wide transition-all text-sm ${loadingRegister ? "bg-stone-300 text-stone-500 cursor-not-allowed" : "bg-stone-900 text-white hover:bg-amber-700 shadow-lg hover:shadow-amber-700/30"}`}
+              className={`w-full py-4 border-3 border-[#1A1A1A] font-black text-xs uppercase tracking-widest transition-all ${
+                loadingRegister ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-[#1A1A1A] text-white hover:bg-[#00F5D4] hover:text-[#1A1A1A] shadow-[4px_4px_0px_0px_#1A1A1A] hover:shadow-none hover:translate-x-1 hover:translate-y-1"
+              }`}
             >
               {loadingRegister ? "Memproses..." : "Daftar Sekarang"}
             </button>
           </form>
 
-          <p className="text-center text-sm text-stone-500 mt-6">
+          <p className="text-center text-xs font-bold uppercase mt-6 tracking-wide">
             Sudah punya akun?{" "}
-            <button onClick={() => navigate("/login")} className="text-amber-600 font-bold hover:underline">
+            <button type="button" onClick={() => navigate("/login")} className="text-amber-700 font-black underline hover:text-[#1A1A1A] transition-colors">
               Masuk di sini
             </button>
           </p>

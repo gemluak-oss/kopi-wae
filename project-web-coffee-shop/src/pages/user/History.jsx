@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const History = () => {
+const History = ({ isDark }) => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user")) || null;
   const token = localStorage.getItem("token");
+
+  const b = isDark ? "border-white" : "border-[#121212]";
+  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#FFFDEE] text-[#121212]";
+  const cardBg = isDark ? "bg-gray-800" : "bg-white";
+  const shadow = isDark ? "shadow-white" : "shadow-[#121212]";
+  const mutedBg = isDark ? "bg-gray-700" : "bg-stone-100";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,74 +38,64 @@ const History = () => {
     }
   };
 
-  const formatRupiah = (angka) => {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(angka));
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-  };
+  const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(angka));
+  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#FAF7F0] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+      <main className={`min-h-screen ${bg} font-mono flex items-center justify-center`}>
+        <div className={`px-6 py-3 border-4 ${b} ${cardBg} font-bold animate-pulse uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat riwayat...</div>
       </main>
     );
   }
 
+  const getStatusStyle = (status) => {
+    const colors = { selesai: "bg-[#00F5D4]", dikirim: "bg-[#00B4D8]", diproses: "bg-[#FFB703]", dibatalkan: "bg-red-400" };
+    return colors[status] || "bg-purple-300";
+  };
+
   return (
-    <main className="min-h-screen bg-[#FAF7F0]">
-      <div className="max-w-7xl mx-auto px-6 py-10">
+    <main className={`min-h-screen ${bg} font-mono py-16`}>
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
         <section className="mb-16">
-          <p className="text-[11px] uppercase tracking-[0.4em] font-black text-amber-700 mb-4">Coffee Journey</p>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none text-stone-800">
-            ORDER <span className="text-amber-700">HISTORY</span>
+          <p className="text-xs uppercase tracking-widest font-bold mb-2">Coffee Journey</p>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight uppercase leading-none">
+            ORDER <span className={`px-2 bg-[#FFB703] text-black border-2 ${b} inline-block shadow-[4px_4px_0px_0px] ${shadow}`}>HISTORY</span>
           </h1>
         </section>
 
         {orders.length === 0 ? (
-          <div className="bg-white rounded-[3rem] p-16 text-center shadow-lg border border-[#F0E4D0]">
-            <p className="text-7xl mb-6">☕</p>
-            <h2 className="text-3xl font-black mb-4 text-stone-800">Belum Ada Pesanan</h2>
-            <p className="text-stone-500">Riwayat transaksi akan muncul setelah kamu melakukan checkout.</p>
-            <button onClick={() => navigate("/home/produk")} className="mt-6 bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition">
+          <div className={`${cardBg} border-4 ${b} p-12 text-center shadow-[8px_8px_0px_0px] ${shadow} max-w-2xl mx-auto`}>
+            <h2 className="text-2xl font-black mb-3 uppercase">Belum Ada Pesanan</h2>
+            <p className="text-sm font-medium opacity-70 mb-8">Riwayat transaksi akan muncul setelah checkout.</p>
+            <button
+              onClick={() => navigate("/home/produk")}
+              className={`px-6 py-3 border-3 ${b} bg-[#FFB703] text-black font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+            >
               Mulai Belanja
             </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {orders.map((order) => (
-              <div key={order.id_transaksi} className="bg-white rounded-[3rem] overflow-hidden shadow-lg border border-[#F0E4D0] hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                <div className="p-8">
-                  <span
-                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      order.status_pesanan === "selesai"
-                        ? "bg-green-100 text-green-700"
-                        : order.status_pesanan === "dikirim"
-                          ? "bg-blue-100 text-blue-700"
-                          : order.status_pesanan === "diproses"
-                            ? "bg-amber-100 text-amber-700"
-                            : order.status_pesanan === "dibatalkan"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    {order.status_pesanan}
-                  </span>
-                  <p className="text-stone-500 text-sm mt-4 mb-4">{formatDate(order.tgl_transaksi)}</p>
-                  <div className="space-y-3 mb-6">
+              <div key={order.id_transaksi} className={`${cardBg} border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-1 hover:translate-y-1 transition-all`}>
+                <div className="p-6">
+                  <div className="mb-4">
+                    <span className={`inline-block px-3 py-1 border-2 ${b} text-[10px] font-black uppercase text-black ${getStatusStyle(order.status_pesanan)}`}>{order.status_pesanan}</span>
+                  </div>
+                  <p className="text-xs font-black opacity-60 uppercase mb-6">{formatDate(order.tgl_transaksi)}</p>
+                  <div className="space-y-4">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.3em] font-black text-stone-400">Invoice</p>
-                      <p className="font-bold text-stone-800">TRX-{String(order.id_transaksi).padStart(4, "0")}</p>
+                      <p className="text-[10px] uppercase font-black opacity-40">Invoice</p>
+                      <p className={`font-bold text-sm ${mutedBg} border-2 ${b} px-2 py-0.5 inline-block`}>TRX-{String(order.id_transaksi).padStart(4, "0")}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.3em] font-black text-stone-400">Pembayaran</p>
-                      <p className="font-bold text-stone-800">{order.metode_pembayaran || "-"}</p>
+                      <p className="text-[10px] uppercase font-black opacity-40">Pembayaran</p>
+                      <p className="font-black text-sm uppercase">{order.metode_pembayaran || "-"}</p>
                     </div>
-                    <div className="pt-3 border-t border-stone-100">
-                      <p className="text-[10px] uppercase tracking-[0.3em] font-black text-stone-400">Total</p>
-                      <p className="text-2xl font-black text-amber-700">{formatRupiah(order.total_harga)}</p>
+                    <div className="pt-4 border-t-2 border-dashed">
+                      <p className="text-[10px] uppercase font-black opacity-40 mb-1">Total</p>
+                      <p className={`text-xl font-black bg-[#FFB703] text-black border-2 ${b} px-3 py-1 inline-block`}>{formatRupiah(order.total_harga)}</p>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useTheme } from "./context/ThemeContext";
 
 import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout";
@@ -11,6 +12,7 @@ import ManajemenPesanan from "./pages/admin/ManajemenPesanan";
 import ManajemenPengguna from "./pages/admin/ManajemenPengguna";
 import LaporanPenjualan from "./pages/admin/LaporanPenjualan";
 import ProfilAdmin from "./pages/admin/ProfilAdmin";
+import ManajemenVoucher from "./pages/admin/ManajemenVoucher";
 
 import Login from "./pages/user/Login";
 import Register from "./pages/user/Register";
@@ -23,6 +25,8 @@ import DetailProduk from "./pages/user/DetailProduk";
 import Keranjang from "./pages/user/Keranjang";
 
 function App() {
+  const { isDark, setIsDark } = useTheme();
+
   const [role, setRole] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     return user?.role || "guest";
@@ -37,28 +41,29 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login setRole={setRole} />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login setRole={setRole} isDark={isDark} />} />
+        <Route path="/register" element={<Register isDark={isDark} />} />
 
-        <Route path="/admin" element={role === "admin" ? <AdminLayout onLogout={handleLogout} /> : <Navigate to="/login" />}>
-          <Route index element={<Dashboard />} />
-          <Route path="kategori" element={<ManajemenKategori />} />
-          <Route path="produk" element={<ManajemenProduk />} />
-          <Route path="pesanan" element={<ManajemenPesanan />} />
-          <Route path="pengguna" element={<ManajemenPengguna />} />
-          <Route path="laporan" element={<LaporanPenjualan />} />
-          <Route path="profil" element={<ProfilAdmin />} />
+        <Route path="/admin" element={role === "admin" ? <AdminLayout onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} /> : <Navigate to="/login" />}>
+          <Route index element={<Dashboard isDark={isDark} />} />
+          <Route path="kategori" element={<ManajemenKategori isDark={isDark} />} />
+          <Route path="produk" element={<ManajemenProduk isDark={isDark} />} />
+          <Route path="pesanan" element={<ManajemenPesanan isDark={isDark} />} />
+          <Route path="pengguna" element={<ManajemenPengguna isDark={isDark} />} />
+          <Route path="laporan" element={<LaporanPenjualan isDark={isDark} />} />
+          <Route path="profil" element={<ProfilAdmin isDark={isDark} />} />
+          <Route path="voucher" element={<ManajemenVoucher isDark={isDark} />} />
         </Route>
 
-        <Route path="/home" element={<UserLayout role={role} onLogout={handleLogout} />}>
-          <Route index element={<Home />} />
-          <Route path="produk" element={<ListProduk />} />
-          <Route path="detail" element={<DetailProduk />} />
-          <Route path="detail/:id" element={<DetailProduk />} />
-          <Route path="keranjang" element={role === "user" ? <Keranjang /> : <Navigate to="/login" />} />
-          <Route path="checkout" element={role === "user" ? <Checkout /> : <Navigate to="/login" />} />
-          <Route path="history" element={role === "user" ? <History /> : <Navigate to="/login" />} />
-          <Route path="profil" element={role === "user" ? <Profil /> : <Navigate to="/login" />} />
+        <Route path="/home" element={<UserLayout role={role} onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} />}>
+          <Route index element={<Home isDark={isDark} />} />
+          <Route path="produk" element={<ListProduk isDark={isDark} />} />
+          <Route path="detail" element={<DetailProduk isDark={isDark} />} />
+          <Route path="detail/:id" element={<DetailProduk isDark={isDark} />} />
+          <Route path="keranjang" element={role === "user" ? <Keranjang isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="checkout" element={role === "user" ? <Checkout isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="history" element={role === "user" ? <History isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="profil" element={role === "user" ? <Profil isDark={isDark} /> : <Navigate to="/login" />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/home" replace />} />
