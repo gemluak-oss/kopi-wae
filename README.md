@@ -42,6 +42,7 @@ kopi-wae/
 - List produk + filter kategori
 - Detail produk
 - Keranjang (CRUD)
+- Voucher diskon
 - Checkout
 - Riwayat transaksi
 - Profil + upload foto
@@ -52,6 +53,7 @@ kopi-wae/
 - Manajemen kategori (CRUD)
 - Manajemen produk (CRUD) + upload gambar
 - Manajemen pesanan (update status)
+- Manajemen voucher (CRUD)
 - Manajemen pengguna (CRUD) + upload foto
 - Laporan penjualan + grafik + export CSV
 - Profil admin + upload foto
