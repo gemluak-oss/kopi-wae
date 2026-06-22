@@ -162,6 +162,16 @@ CREATE TABLE PEMBAYARAN (
     PRIMARY KEY (id_pembayaran),
     FOREIGN KEY (id_transaksi) REFERENCES TRANSAKSI(id_transaksi)
 );
+
+-- VOUCHER table
+CREATE TABLE VOUCHER (
+    id_voucher INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    kode VARCHAR(50) NOT NULL UNIQUE,
+    diskon_persen INT NOT NULL,
+    max_diskon DECIMAL(10,2),
+    min_belanja DECIMAL(10,2) DEFAULT 0,
+    kuota INT DEFAULT 100
+);
 ```
 
 ### Insert Data Dummy
@@ -186,6 +196,11 @@ VALUES
 (4, 'V60 Drip', 38000, 60, 10, 'https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=400'),
 (2, 'Signature Blend', 45000, 50, 5, 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400'),
 (1, 'Kopi Bali Kintamani', 42000, 70, 10, 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=400');
+
+-- Voucher
+INSERT INTO VOUCHER (kode, diskon_persen, max_diskon, min_belanja, kuota) VALUES
+('KOPI10', 10, 20000, 50000, 50),
+('HEMAT20', 20, 30000, 100000, 30);
 ```
 
 ### 3. Setup Backend
