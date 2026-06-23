@@ -47,13 +47,15 @@ kopi-wae/
 - Riwayat transaksi
 - Profil + upload foto
 - Popup logout
+- Limit pemakaian voucher per user
+- Notifikasi voucher sukses/gagal di checkout
 
 ### Admin
 - Dashboard dengan statistik & top kopi
 - Manajemen kategori (CRUD)
 - Manajemen produk (CRUD) + upload gambar
 - Manajemen pesanan (update status)
-- Manajemen voucher (CRUD)
+- Manajemen voucher (CRUD) + limit per user + statistik pemakaian
 - Manajemen pengguna (CRUD) + upload foto
 - Laporan penjualan + grafik + export CSV
 - Profil admin + upload foto
@@ -174,6 +176,21 @@ CREATE TABLE VOUCHER (
     min_belanja DECIMAL(10,2) DEFAULT 0,
     kuota INT DEFAULT 100
 );
+
+-- VOUCHER_USAGE table (tracking pemakaian voucher per user)
+CREATE TABLE VOUCHER_USAGE (
+    id_usage INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_user INT NOT NULL,
+    id_voucher INT NOT NULL,
+    id_transaksi INT NULL,
+    digunakan_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES USER(id_user) ON DELETE CASCADE,
+    FOREIGN KEY (id_voucher) REFERENCES VOUCHER(id_voucher) ON DELETE CASCADE,
+    FOREIGN KEY (id_transaksi) REFERENCES TRANSAKSI(id_transaksi) ON DELETE SET NULL
+);
+
+-- Alter VOUCHER untuk limit per user
+ALTER TABLE VOUCHER ADD COLUMN max_usage_per_user INT DEFAULT 1 AFTER kuota;
 ```
 
 ### Insert Data Dummy
@@ -293,6 +310,13 @@ WHERE email = 'admin@kopiwae.com';
 - `GET/PUT /api/admin/pesanan`
 - `GET/POST/PUT/DELETE /api/admin/users`
 - `GET /api/admin/laporan`
+
+### Voucher
+
+- `GET /api/user/voucher/aktif/:userId` - Voucher aktif dengan info limit user
+- `POST /api/user/voucher` - Validasi voucher + cek limit per user
+- `PUT /api/user/voucher/kurang/:kode` - Kurangi kuota + catat pemakaian
+- `GET /api/user/voucher/history/:userId` - Riwayat pemakaian voucher
 
 ## Environment Variables
 
