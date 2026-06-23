@@ -95,21 +95,21 @@ const getAllProdukAdmin = (req, res) => {
 };
 
 const tambahProduk = (req, res) => {
-  const { id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar } = req.body;
+  const { id_kategori, nama_kopi, deskripsi, harga_kopi, stok, stok_minimal, gambar } = req.body;
   if (!id_kategori || !nama_kopi || !harga_kopi) {
     return res.status(400).json({ pesan: "Kategori, nama, dan harga wajib diisi" });
   }
-  const sql = "INSERT INTO KOPI (id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar) VALUES (?, ?, ?, ?, ?, ?)";
-  db.query(sql, [id_kategori, nama_kopi, harga_kopi, stok || 0, stok_minimal || 0, gambar || null], (err) => {
+  const sql = "INSERT INTO KOPI (id_kategori, nama_kopi, deskripsi, harga_kopi, stok, stok_minimal, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  db.query(sql, [id_kategori, nama_kopi, deskripsi || null, harga_kopi, stok || 0, stok_minimal || 0, gambar || null], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal menambah produk" });
     res.status(201).json({ pesan: "Produk berhasil ditambahkan!" });
   });
 };
 
 const editProduk = (req, res) => {
-  const { id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar } = req.body;
-  const sql = "UPDATE KOPI SET id_kategori=?, nama_kopi=?, harga_kopi=?, stok=?, stok_minimal=?, gambar=? WHERE id_kopi=?";
-  db.query(sql, [id_kategori, nama_kopi, harga_kopi, stok, stok_minimal, gambar || null, req.params.id], (err) => {
+  const { id_kategori, nama_kopi, deskripsi, harga_kopi, stok, stok_minimal, gambar } = req.body;
+  const sql = "UPDATE KOPI SET id_kategori=?, nama_kopi=?, deskripsi=?, harga_kopi=?, stok=?, stok_minimal=?, gambar=? WHERE id_kopi=?";
+  db.query(sql, [id_kategori, nama_kopi, deskripsi || null, harga_kopi, stok, stok_minimal, gambar || null, req.params.id], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal mengupdate produk" });
     res.json({ pesan: "Produk diupdate!" });
   });

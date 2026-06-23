@@ -73,17 +73,11 @@ router.post("/voucher", authMiddleware, (req, res) => {
 
       const v = results[0];
 
-      // Cek limit per user
       if (v.sudah_dipakai >= v.max_usage_per_user) {
-        return res.status(400).json({
-          message: `Kamu sudah pakai voucher ini ${v.max_usage_per_user}x`,
-        });
+        return res.status(400).json({ message: `Kamu sudah pakai voucher ini ${v.max_usage_per_user}x` });
       }
 
-      if (subtotal < v.min_belanja)
-        return res.status(400).json({
-          message: `Minimal belanja Rp ${Number(v.min_belanja).toLocaleString("id-ID")}`,
-        });
+      if (subtotal < v.min_belanja) return res.status(400).json({ message: `Minimal belanja Rp ${Number(v.min_belanja).toLocaleString("id-ID")}` });
 
       let diskon = (subtotal * v.diskon_persen) / 100;
       if (v.max_diskon && diskon > v.max_diskon) diskon = v.max_diskon;
@@ -97,8 +91,6 @@ router.post("/voucher", authMiddleware, (req, res) => {
 router.put("/voucher/kurang/:kode", authMiddleware, (req, res) => {
   const { kode } = req.params;
   const kodeUpper = kode.toUpperCase();
-
-  // ✅ Ambil userId dari token JWT
   const userId = req.user?.id;
 
   db.query("SELECT * FROM VOUCHER WHERE kode = ?", [kodeUpper], (err, results) => {
@@ -108,20 +100,14 @@ router.put("/voucher/kurang/:kode", authMiddleware, (req, res) => {
     const voucher = results[0];
     if (voucher.kuota <= 0) return res.status(400).json({ message: "Kuota voucher sudah habis" });
 
-    // Kurangi kuota
     db.query("UPDATE VOUCHER SET kuota = kuota - 1 WHERE kode = ?", [kodeUpper], (err2) => {
       if (err2) return res.status(500).json({ message: "Gagal update voucher" });
 
-      // ✅ Catat pemakaian voucher dengan userId dari token
       db.query("INSERT INTO VOUCHER_USAGE (id_user, id_voucher) VALUES (?, ?)", [userId, voucher.id_voucher], (err3) => {
         if (err3) console.error("Gagal catat voucher usage:", err3);
       });
 
-      res.json({
-        success: true,
-        message: "Voucher berhasil digunakan",
-        sisa_kuota: voucher.kuota - 1,
-      });
+      res.json({ success: true, message: "Voucher berhasil digunakan", sisa_kuota: voucher.kuota - 1 });
     });
   });
 });
@@ -189,6 +175,39 @@ router.delete("/keranjang/:id", authMiddleware, (req, res) => {
 router.post("/checkout", authMiddleware, userController.prosesCheckout);
 
 // ==================== HISTORY ====================
+
+// ✅ DETAIL (harus diatas /:userId)
+router.get("/history/detail/:id", authMiddleware, (req, res) => {
+  const { id } = req.params;
+
+  db.query(
+    `SELECT t.*, p.metode_pembayaran 
+     FROM TRANSAKSI t
+     LEFT JOIN PEMBAYARAN p ON t.id_transaksi = p.id_transaksi
+     WHERE t.id_transaksi = ?`,
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      if (results.length === 0) return res.status(404).json({ message: "Pesanan tidak ditemukan" });
+
+      const order = results[0];
+
+      db.query(
+        `SELECT dt.*, k.nama_kopi, k.gambar 
+         FROM DETAIL_TRANSAKSI dt
+         JOIN KOPI k ON dt.id_kopi = k.id_kopi
+         WHERE dt.id_transaksi = ?`,
+        [id],
+        (err2, items) => {
+          if (err2) return res.status(500).json({ message: "Error" });
+          order.items = items;
+          res.json({ data: order });
+        },
+      );
+    },
+  );
+});
+
 router.get("/history/:userId", authMiddleware, userController.getHistoryTransaksi);
 
 module.exports = router;

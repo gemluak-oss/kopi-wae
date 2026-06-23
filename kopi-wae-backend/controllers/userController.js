@@ -109,7 +109,8 @@ const addToKeranjang = (req, res) => {
 
 // ==================== CHECKOUT ====================
 const prosesCheckout = (req, res) => {
-  const { userId, metodePembayaran } = req.body;
+  // ✅ Ambil diskon & total dari FE
+  const { userId, metodePembayaran, diskon, total: totalDariFE } = req.body;
   if (!userId) return res.status(400).json({ message: "userId wajib diisi" });
 
   const getCart = `
@@ -128,9 +129,12 @@ const prosesCheckout = (req, res) => {
       if (item.qty > item.stok) return res.status(400).json({ message: `Stok ${item.nama_kopi} tidak cukup` });
     }
 
-    const total = items.reduce((sum, i) => sum + i.qty * i.harga_kopi, 0);
+    const subtotal = items.reduce((sum, i) => sum + i.qty * i.harga_kopi, 0);
 
-    db.query("INSERT INTO TRANSAKSI (id_user, tgl_transaksi, total_harga, status_pesanan) VALUES (?, NOW(), ?, ?)", [userId, total, "menunggu"], (err, result) => {
+    // ✅ Pake total dari FE kalo ada, kalo ga hitung sendiri
+    const totalHarga = totalDariFE || subtotal + 10000 - (diskon || 0);
+
+    db.query("INSERT INTO TRANSAKSI (id_user, tgl_transaksi, total_harga, status_pesanan) VALUES (?, NOW(), ?, ?)", [userId, totalHarga, "menunggu"], (err, result) => {
       if (err) return res.status(500).json({ message: "Error", error: err });
       const idTransaksi = result.insertId;
 
@@ -145,7 +149,12 @@ const prosesCheckout = (req, res) => {
 
       db.query("DELETE FROM ITEM_KERANJANG WHERE id_keranjang = (SELECT id_keranjang FROM KERANJANG WHERE id_user = ?)", [userId]);
 
-      res.status(201).json({ message: "Checkout berhasil", id_transaksi: idTransaksi, total });
+      res.status(201).json({
+        message: "Checkout berhasil",
+        id_transaksi: idTransaksi,
+        total: totalHarga,
+        diskon: diskon || 0,
+      });
     });
   });
 };
@@ -154,10 +163,15 @@ const prosesCheckout = (req, res) => {
 const getHistoryTransaksi = (req, res) => {
   const { userId } = req.params;
   const query = `
-    SELECT t.*, pm.metode_pembayaran, pm.status_pembayaran
+    SELECT t.id_transaksi, t.id_user, t.tgl_transaksi, t.total_harga, t.status_pesanan,
+      pm.metode_pembayaran, pm.status_pembayaran,
+      COUNT(dt.id_detail) as total_item
     FROM TRANSAKSI t
     LEFT JOIN PEMBAYARAN pm ON t.id_transaksi = pm.id_transaksi
-    WHERE t.id_user = ? ORDER BY t.tgl_transaksi DESC
+    LEFT JOIN DETAIL_TRANSAKSI dt ON t.id_transaksi = dt.id_transaksi
+    WHERE t.id_user = ?
+    GROUP BY t.id_transaksi, t.id_user, t.tgl_transaksi, t.total_harga, t.status_pesanan, pm.metode_pembayaran, pm.status_pembayaran
+    ORDER BY t.tgl_transaksi DESC
   `;
   db.query(query, [userId], (err, results) => {
     if (err) return res.status(500).json({ message: "Error", error: err });

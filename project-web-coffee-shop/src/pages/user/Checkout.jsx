@@ -12,7 +12,7 @@ const Checkout = ({ isDark }) => {
   const [validationMessage, setValidationMessage] = useState("");
   const [kodeVoucher, setKodeVoucher] = useState("");
   const [voucher, setVoucher] = useState(null);
-  const [voucherMsg, setVoucherMsg] = useState({ type: "", text: "" }); // ✅ state pesan voucher
+  const [voucherMsg, setVoucherMsg] = useState({ type: "", text: "" });
 
   const [formData, setFormData] = useState({ nama: "", telepon: "", alamat: "", pembayaran: "Transfer Bank" });
   const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -40,7 +40,6 @@ const Checkout = ({ isDark }) => {
     } catch (err) {}
   };
 
-  // ✅ Fungsi cek voucher dengan notif bagus
   const cekVoucher = async () => {
     if (!kodeVoucher.trim()) {
       setVoucherMsg({ type: "error", text: "Masukkan kode voucher terlebih dahulu!" });
@@ -50,14 +49,13 @@ const Checkout = ({ isDark }) => {
     try {
       const res = await axios.post("http://localhost:5000/api/user/voucher", { kode: kodeVoucher.toUpperCase(), subtotal, userId: user.id }, { headers: { Authorization: `Bearer ${token}` } });
       setVoucher(res.data.data);
-      setVoucherMsg({ type: "success", text: `Voucher ${res.data.data.kode} berhasil digunakan! Diskon Rp ${res.data.data.diskon.toLocaleString("id-ID")}` });
+      setVoucherMsg({ type: "success", text: `Voucher ${res.data.data.kode} berhasil! Diskon Rp ${res.data.data.diskon.toLocaleString("id-ID")}` });
     } catch (err) {
       setVoucher(null);
       setVoucherMsg({ type: "error", text: err.response?.data?.message || "Voucher tidak valid" });
     }
   };
 
-  // ✅ Hapus voucher
   const hapusVoucher = () => {
     setVoucher(null);
     setVoucherMsg({ type: "", text: "" });
@@ -94,10 +92,26 @@ const Checkout = ({ isDark }) => {
   const verifyPayment = async () => {
     setIsVerifying(true);
     try {
+      // Kurangi kuota voucher
       if (voucher) {
         await axios.put(`http://localhost:5000/api/user/voucher/kurang/${voucher.kode}`, {}, { headers: { Authorization: `Bearer ${token}` } });
       }
-      await axios.post("http://localhost:5000/api/user/checkout", { userId: user.id, metodePembayaran: formData.pembayaran }, { headers: { Authorization: `Bearer ${token}` } });
+
+      // ✅ Kirim diskon + voucher ke backend
+      await axios.post(
+        "http://localhost:5000/api/user/checkout",
+        {
+          userId: user.id,
+          metodePembayaran: formData.pembayaran,
+          diskon: diskon,
+          voucherKode: voucher?.kode || null,
+          total: total,
+          subtotal: subtotal,
+          ongkir: ongkir,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
       window.dispatchEvent(new Event("keranjangChanged"));
       setIsVerifying(false);
       setShowPaymentModal(false);
@@ -187,12 +201,10 @@ const Checkout = ({ isDark }) => {
                 )}
               </div>
 
-              {/* ✅ Notif voucher */}
               {voucherMsg.text && (
                 <div className={`mt-4 border-4 px-4 py-3 font-black text-xs uppercase ${voucherMsg.type === "success" ? "bg-green-100 border-green-600 text-green-700" : "bg-red-100 border-red-500 text-red-700"}`}>{voucherMsg.text}</div>
               )}
 
-              {/* Info voucher aktif */}
               {voucher && (
                 <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase opacity-70">
                   <span>Min Belanja: Rp {Number(voucher.min_belanja).toLocaleString("id-ID")}</span>
@@ -281,7 +293,14 @@ const Checkout = ({ isDark }) => {
       {/* MODALS */}
       {[
         { show: showValidationModal, title: "Data Belum Lengkap", msg: validationMessage, onConfirm: () => setShowValidationModal(false) },
-        { show: showPaymentModal, title: "Konfirmasi Pembayaran", msg: `Total: ${formatRupiah(total)} | ${formData.pembayaran}`, onConfirm: verifyPayment, loading: isVerifying, onCancel: () => setShowPaymentModal(false) },
+        {
+          show: showPaymentModal,
+          title: "Konfirmasi Pembayaran",
+          msg: `Total: ${formatRupiah(total)} | ${formData.pembayaran}${diskon > 0 ? ` | Diskon: ${formatRupiah(diskon)}` : ""}`,
+          onConfirm: verifyPayment,
+          loading: isVerifying,
+          onCancel: () => setShowPaymentModal(false),
+        },
         {
           show: showSuccessModal,
           title: "Pesanan Berhasil!",

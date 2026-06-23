@@ -68,10 +68,11 @@ function App() {
           <Route path="produk" element={<ListProduk isDark={isDark} />} />
           <Route path="detail" element={<DetailProduk isDark={isDark} />} />
           <Route path="detail/:id" element={<DetailProduk isDark={isDark} />} />
-          <Route path="keranjang" element={role === "user" ? <Keranjang isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="checkout" element={role === "user" ? <Checkout isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="history" element={role === "user" ? <History isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="profil" element={role === "user" ? <Profil isDark={isDark} /> : <Navigate to="/login" />} />
+          // ✅ JADI INI
+          <Route path="keranjang" element={role !== "guest" ? <Keranjang isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="checkout" element={role !== "guest" ? <Checkout isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="history" element={role !== "guest" ? <History isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="profil" element={role !== "guest" ? <Profil isDark={isDark} /> : <Navigate to="/login" />} />
         </Route>
 
         {/* ✅ REDIRECT KALO ADMIN COBA BUKA / */}

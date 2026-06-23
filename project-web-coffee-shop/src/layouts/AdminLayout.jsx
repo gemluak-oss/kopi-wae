@@ -47,6 +47,7 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
     { path: "/admin/voucher", label: "Voucher" },
     { path: "/admin/laporan", label: "Laporan" },
     { path: "/admin/profil", label: "Profil Saya" },
+    { path: "/home", label: "Preview Toko", isExternal: true },
   ];
 
   const getPageTitle = () => {
@@ -79,13 +80,33 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const active = isActive(item.path);
+
+            if (item.isExternal) {
+              return (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center justify-between px-4 py-2.5 border-2 ${b} text-xs font-black uppercase tracking-wider transition-all
+          ${cardBg} shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5`}
+                >
+                  <span>{item.label}</span>
+                  <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              );
+            }
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsSidebarOpen(false)}
                 className={`flex items-center justify-between px-4 py-2.5 border-2 ${b} text-xs font-black uppercase tracking-wider transition-all
-                  ${active ? "bg-[#00F5D4] text-black translate-x-1 translate-y-1 shadow-none" : `${cardBg} shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5`}`}
+        ${active ? "bg-[#00F5D4] text-black translate-x-1 translate-y-1 shadow-none" : `${cardBg} shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5`}`}
               >
                 <span>{item.label}</span>
                 {active && <span className="w-2 h-2 bg-black" />}
