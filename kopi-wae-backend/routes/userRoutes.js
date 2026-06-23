@@ -24,9 +24,29 @@ router.get("/kategori", (req, res) => {
 
 // ==================== VOUCHER ====================
 
-// Get voucher aktif (public)
-router.get("/voucher/aktif", (req, res) => {
-  db.query("SELECT kode, diskon_persen, max_diskon, min_belanja FROM VOUCHER WHERE kuota > 0 LIMIT 5", (err, results) => {
+// Get voucher aktif dengan info pemakaian user
+router.get("/voucher/aktif/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  const query = `
+    SELECT v.*, 
+      COALESCE(vu.total_pakai, 0) as sudah_dipakai,
+      CASE 
+        WHEN COALESCE(vu.total_pakai, 0) >= v.max_usage_per_user THEN 1 
+        ELSE 0 
+      END as kuota_habis
+    FROM VOUCHER v
+    LEFT JOIN (
+      SELECT id_voucher, COUNT(*) as total_pakai 
+      FROM VOUCHER_USAGE 
+      WHERE id_user = ? 
+      GROUP BY id_voucher
+    ) vu ON v.id_voucher = vu.id_voucher
+    WHERE v.kuota > 0
+    LIMIT 5
+  `;
+
+  db.query(query, [userId], (err, results) => {
     if (err) return res.status(500).json({ message: "Error" });
     res.json({ data: results });
   });
@@ -34,65 +54,92 @@ router.get("/voucher/aktif", (req, res) => {
 
 // Cek validasi voucher (protected)
 router.post("/voucher", authMiddleware, (req, res) => {
-  const { kode, subtotal } = req.body;
+  const { kode, subtotal, userId } = req.body;
 
-  db.query("SELECT * FROM VOUCHER WHERE kode = ? AND kuota > 0", [kode.toUpperCase()], (err, results) => {
-    if (err || results.length === 0) return res.status(400).json({ message: "Voucher tidak valid" });
+  db.query(
+    `SELECT v.*, 
+      COALESCE(vu.total_pakai, 0) as sudah_dipakai
+     FROM VOUCHER v
+     LEFT JOIN (
+       SELECT id_voucher, COUNT(*) as total_pakai 
+       FROM VOUCHER_USAGE 
+       WHERE id_user = ? 
+       GROUP BY id_voucher
+     ) vu ON v.id_voucher = vu.id_voucher
+     WHERE v.kode = ? AND v.kuota > 0`,
+    [userId, kode.toUpperCase()],
+    (err, results) => {
+      if (err || results.length === 0) return res.status(400).json({ message: "Voucher tidak valid" });
 
-    const v = results[0];
+      const v = results[0];
 
-    if (subtotal < v.min_belanja)
-      return res.status(400).json({
-        message: `Minimal belanja Rp ${v.min_belanja}`,
-      });
+      // Cek limit per user
+      if (v.sudah_dipakai >= v.max_usage_per_user) {
+        return res.status(400).json({
+          message: `Kamu sudah pakai voucher ini ${v.max_usage_per_user}x`,
+        });
+      }
 
-    let diskon = (subtotal * v.diskon_persen) / 100;
-    if (v.max_diskon && diskon > v.max_diskon) diskon = v.max_diskon;
+      if (subtotal < v.min_belanja)
+        return res.status(400).json({
+          message: `Minimal belanja Rp ${Number(v.min_belanja).toLocaleString("id-ID")}`,
+        });
 
-    res.json({ data: { ...v, diskon } });
-  });
+      let diskon = (subtotal * v.diskon_persen) / 100;
+      if (v.max_diskon && diskon > v.max_diskon) diskon = v.max_diskon;
+
+      res.json({ data: { ...v, diskon } });
+    },
+  );
 });
 
-// Kurangi kuota voucher setelah checkout berhasil (protected)
+// Kurangi kuota voucher + catat pemakaian (protected)
 router.put("/voucher/kurang/:kode", authMiddleware, (req, res) => {
   const { kode } = req.params;
   const kodeUpper = kode.toUpperCase();
 
-  console.log(`[VOUCHER] Mengurangi kuota: ${kodeUpper}`);
+  // ✅ Ambil userId dari token JWT
+  const userId = req.user?.id;
 
-  // Cek dulu voucher masih ada
   db.query("SELECT * FROM VOUCHER WHERE kode = ?", [kodeUpper], (err, results) => {
-    if (err) {
-      console.error("[VOUCHER] Error cek:", err);
-      return res.status(500).json({ message: "Error server" });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Voucher tidak ditemukan" });
-    }
+    if (err) return res.status(500).json({ message: "Error server" });
+    if (results.length === 0) return res.status(404).json({ message: "Voucher tidak ditemukan" });
 
     const voucher = results[0];
-
-    if (voucher.kuota <= 0) {
-      return res.status(400).json({ message: "Kuota voucher sudah habis" });
-    }
+    if (voucher.kuota <= 0) return res.status(400).json({ message: "Kuota voucher sudah habis" });
 
     // Kurangi kuota
-    db.query("UPDATE VOUCHER SET kuota = kuota - 1 WHERE kode = ?", [kodeUpper], (err2, result) => {
-      if (err2) {
-        console.error("[VOUCHER] Error update:", err2);
-        return res.status(500).json({ message: "Gagal update voucher" });
-      }
+    db.query("UPDATE VOUCHER SET kuota = kuota - 1 WHERE kode = ?", [kodeUpper], (err2) => {
+      if (err2) return res.status(500).json({ message: "Gagal update voucher" });
 
-      console.log(`[VOUCHER] Sukses: ${kodeUpper}, sisa kuota: ${voucher.kuota - 1}`);
+      // ✅ Catat pemakaian voucher dengan userId dari token
+      db.query("INSERT INTO VOUCHER_USAGE (id_user, id_voucher) VALUES (?, ?)", [userId, voucher.id_voucher], (err3) => {
+        if (err3) console.error("Gagal catat voucher usage:", err3);
+      });
 
       res.json({
         success: true,
-        message: "Kuota voucher berhasil dikurangi",
+        message: "Voucher berhasil digunakan",
         sisa_kuota: voucher.kuota - 1,
       });
     });
   });
+});
+
+// History voucher user
+router.get("/voucher/history/:userId", authMiddleware, (req, res) => {
+  db.query(
+    `SELECT vu.*, v.kode, v.diskon_persen 
+     FROM VOUCHER_USAGE vu 
+     JOIN VOUCHER v ON vu.id_voucher = v.id_voucher 
+     WHERE vu.id_user = ? 
+     ORDER BY vu.digunakan_pada DESC`,
+    [req.params.userId],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.json({ data: results });
+    },
+  );
 });
 
 // ==================== PROFIL ====================

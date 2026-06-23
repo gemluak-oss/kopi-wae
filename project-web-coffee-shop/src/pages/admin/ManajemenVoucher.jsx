@@ -5,9 +5,15 @@ export default function ManajemenVoucher({ isDark }) {
   const [voucher, setVoucher] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ kode: "", diskon_persen: "", max_diskon: "", min_belanja: "", kuota: "" });
+  const [form, setForm] = useState({
+    kode: "",
+    diskon_persen: "",
+    max_diskon: "",
+    min_belanja: "",
+    kuota: "",
+    max_usage_per_user: 1, // ✅ tambahin
+  });
 
-  // Konfigurasi Variabel Dark Mode & Neo-Brutalism
   const b = isDark ? "border-white" : "border-[#1A1A1A]";
   const bg = isDark ? "bg-gray-950 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
   const cardBg = isDark ? "bg-gray-900" : "bg-white";
@@ -41,12 +47,17 @@ export default function ManajemenVoucher({ isDark }) {
         max_diskon: form.max_diskon ? Number(form.max_diskon) : null,
         min_belanja: form.min_belanja ? Number(form.min_belanja) : 0,
         kuota: form.kuota ? Number(form.kuota) : 0,
+        max_usage_per_user: Number(form.max_usage_per_user) || 1, // ✅ tambahin
       };
 
       if (editingId) {
-        await axios.put(`http://localhost:5000/api/admin/voucher/${editingId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`http://localhost:5000/api/admin/voucher/${editingId}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        await axios.post("http://localhost:5000/api/admin/voucher", payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post("http://localhost:5000/api/admin/voucher", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       setShowModal(false);
       setEditingId(null);
@@ -60,16 +71,24 @@ export default function ManajemenVoucher({ isDark }) {
     if (!confirm("Hapus voucher?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/admin/voucher/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`http://localhost:5000/api/admin/voucher/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchVoucher();
     } catch (err) {
       alert("Gagal menghapus voucher");
     }
   };
 
+  // ✅ Format currency
+  const formatRp = (num) => {
+    if (!num && num !== 0) return "—";
+    return "Rp " + Number(num).toLocaleString("id-ID");
+  };
+
   return (
     <main className={`p-6 min-h-screen font-mono space-y-6 ${bg}`}>
-      {/* HEADER SECTION */}
+      {/* HEADER */}
       <header className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} flex justify-between items-center`}>
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight">Manajemen Voucher</h1>
@@ -77,7 +96,7 @@ export default function ManajemenVoucher({ isDark }) {
         </div>
         <button
           onClick={() => {
-            setForm({ kode: "", diskon_persen: "", max_diskon: "", min_belanja: "", kuota: "" });
+            setForm({ kode: "", diskon_persen: "", max_diskon: "", min_belanja: "", kuota: "", max_usage_per_user: 1 });
             setEditingId(null);
             setShowModal(true);
           }}
@@ -87,73 +106,93 @@ export default function ManajemenVoucher({ isDark }) {
         </button>
       </header>
 
-      {/* DATA TABLE CONTAINER */}
+      {/* TABLE */}
       <div className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase tracking-wider`}>
-                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Kode Kupon</th>
-                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-32`}>Besar Diskon</th>
-                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Potongan Maksimal</th>
-                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Minimal Belanja</th>
-                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-32`}>Sisa Kuota</th>
-                <th className="p-4 text-center w-40">Aksi Kelola</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Kode</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-20`}>Diskon</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Max Potongan</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>Min Belanja</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-16`}>Kuota</th>
+                {/* ✅ Kolom baru */}
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-16 text-center`}>Limit/User</th>
+                <th className={`p-4 border-r-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"} w-16 text-center`}>Terpakai</th>
+                <th className="p-4 text-center w-40">Aksi</th>
               </tr>
             </thead>
             <tbody className={`divide-y-2 ${isDark ? "divide-white/10" : "divide-[#1A1A1A]/10"} text-xs font-bold uppercase`}>
-              {voucher.map((v) => (
-                <tr key={v.id_voucher} className="hover:bg-current/5 transition-colors">
-                  <td className={`p-4 font-black tracking-wider border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>
-                    <span className={`px-2 py-1 border-2 ${b} ${isDark ? "bg-amber-950 text-amber-300" : "bg-[#FFFDF6] text-amber-700"} shadow-[2px_2px_0px_0px] ${shadow}`}>{v.kode}</span>
-                  </td>
-                  <td className={`p-4 font-mono font-black text-sm border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>{v.diskon_persen}%</td>
-                  <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>{v.max_diskon ? `Rp ${v.max_diskon.toLocaleString("id-ID")}` : "—"}</td>
-                  <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>Rp {v.min_belanja?.toLocaleString("id-ID")}</td>
-                  <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"} font-black`}>{v.kuota}</td>
-                  <td className="p-4">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          setForm(v);
-                          setEditingId(v.id_voucher);
-                          setShowModal(true);
-                        }}
-                        className={`px-3 py-1.5 border-2 ${b} bg-[#FFC700] text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(v.id_voucher)}
-                        className={`px-3 py-1.5 border-2 ${b} bg-[#FF6B6B] text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                      >
-                        Hapus
-                      </button>
-                    </div>
+              {voucher.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center opacity-50">
+                    Belum ada voucher
                   </td>
                 </tr>
-              ))}
+              ) : (
+                voucher.map((v) => (
+                  <tr key={v.id_voucher} className="hover:bg-current/5 transition-colors">
+                    <td className={`p-4 font-black tracking-wider border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>
+                      <span className={`px-2 py-1 border-2 ${b} ${isDark ? "bg-amber-950 text-amber-300" : "bg-[#FFFDF6] text-amber-700"} shadow-[2px_2px_0px_0px] ${shadow}`}>{v.kode}</span>
+                    </td>
+                    <td className={`p-4 font-mono font-black text-sm border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>{v.diskon_persen}%</td>
+                    <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>{formatRp(v.max_diskon)}</td>
+                    <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"}`}>{formatRp(v.min_belanja)}</td>
+                    <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"} font-black`}>{v.kuota}</td>
+                    {/* ✅ Kolom limit */}
+                    <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"} text-center font-black`}>{v.max_usage_per_user || 1}x</td>
+                    {/* ✅ Kolom terpakai */}
+                    <td className={`p-4 font-mono border-r-2 ${isDark ? "border-white/10" : "border-[#1A1A1A]/10"} text-center`}>{v.total_digunakan || 0}</td>
+                    <td className="p-4">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => {
+                            setForm({
+                              kode: v.kode,
+                              diskon_persen: v.diskon_persen,
+                              max_diskon: v.max_diskon || "",
+                              min_belanja: v.min_belanja || "",
+                              kuota: v.kuota,
+                              max_usage_per_user: v.max_usage_per_user || 1, // ✅ tambahin
+                            });
+                            setEditingId(v.id_voucher);
+                            setShowModal(true);
+                          }}
+                          className={`px-3 py-1.5 border-2 ${b} bg-[#FFC700] text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(v.id_voucher)}
+                          className={`px-3 py-1.5 border-2 ${b} bg-[#FF6B6B] text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* OVERLAY MODAL FORM */}
+      {/* MODAL */}
       {showModal && (
         <div className={`fixed inset-0 ${isDark ? "bg-black/60" : "bg-[#1A1A1A]/40"} flex justify-center items-center z-50 p-4`}>
           <div className={`${cardBg} border-4 ${b} w-full max-w-md shadow-[8px_8px_0px_0px] ${shadow}`}>
-            {/* Modal Header */}
             <div className={`p-4 border-b-4 ${b} bg-[#FFC700] text-black flex justify-between items-center`}>
-              <h2 className="text-sm font-black uppercase tracking-widest">{editingId ? "Ubah Parameter Voucher" : "Buat Voucher Baru"}</h2>
-              <button onClick={() => setShowModal(false)} className={`w-8 h-8 border-2 ${b} bg-white text-black flex items-center justify-center font-black text-lg hover:bg-[#FF6B6B] transition-colors focus:outline-none`}>
+              <h2 className="text-sm font-black uppercase tracking-widest">{editingId ? "Ubah Voucher" : "Buat Voucher Baru"}</h2>
+              <button onClick={() => setShowModal(false)} className={`w-8 h-8 border-2 ${b} bg-white text-black flex items-center justify-center font-black text-lg hover:bg-[#FF6B6B] transition-colors`}>
                 &times;
               </button>
             </div>
 
-            {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Kode Kupon Promosi</label>
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Kode Kupon</label>
                 <input
                   placeholder="Contoh: KOPIASIK"
                   value={form.kode}
@@ -164,7 +203,7 @@ export default function ManajemenVoucher({ isDark }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Persentase Diskon (%)</label>
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Diskon (%)</label>
                 <input
                   type="number"
                   placeholder="0"
@@ -176,7 +215,7 @@ export default function ManajemenVoucher({ isDark }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Maksimal Potongan Harga (Rp)</label>
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Max Potongan (Rp)</label>
                 <input
                   type="number"
                   placeholder="Kosongkan jika tanpa batas"
@@ -187,7 +226,7 @@ export default function ManajemenVoucher({ isDark }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Minimal Belanja Syarat (Rp)</label>
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Min Belanja (Rp)</label>
                 <input
                   type="number"
                   placeholder="0"
@@ -197,18 +236,27 @@ export default function ManajemenVoucher({ isDark }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Kuota Pemakaian</label>
-                <input
-                  type="number"
-                  placeholder="Jumlah penggunaan kupon"
-                  value={form.kuota || ""}
-                  onChange={(e) => setForm({ ...form, kuota: e.target.value })}
-                  className={`w-full border-2 ${b} p-2.5 text-xs font-bold focus:outline-none ${inputBg}`}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Kuota</label>
+                  <input type="number" placeholder="100" value={form.kuota || ""} onChange={(e) => setForm({ ...form, kuota: e.target.value })} className={`w-full border-2 ${b} p-2.5 text-xs font-bold focus:outline-none ${inputBg}`} />
+                </div>
+
+                {/* ✅ FIELD BARU: Limit per user */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5">Limit/User</label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={form.max_usage_per_user || 1}
+                    onChange={(e) => setForm({ ...form, max_usage_per_user: e.target.value })}
+                    className={`w-full border-2 ${b} p-2.5 text-xs font-bold focus:outline-none ${inputBg}`}
+                    min="1"
+                  />
+                  <p className="text-[9px] font-bold uppercase opacity-50 mt-1">Max pakai per user</p>
+                </div>
               </div>
 
-              {/* Modal Actions */}
               <div className={`flex gap-3 pt-4 border-t-2 ${isDark ? "border-white/20" : "border-[#1A1A1A]/20"}`}>
                 <button
                   type="button"

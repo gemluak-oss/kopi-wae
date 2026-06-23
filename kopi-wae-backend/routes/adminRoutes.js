@@ -107,34 +107,59 @@ router.delete("/users/:id", (req, res) => {
 });
 
 // ==================== VOUCHER ====================
+
+// GET all voucher dengan statistik
 router.get("/voucher", (req, res) => {
-  db.query("SELECT * FROM VOUCHER ORDER BY id_voucher DESC", (err, results) => {
-    if (err) return res.status(500).json({ message: "Error" });
-    res.json({ data: results });
-  });
+  db.query(
+    `SELECT v.*, 
+      COUNT(vu.id_usage) as total_digunakan,
+      COUNT(DISTINCT vu.id_user) as total_user
+     FROM VOUCHER v
+     LEFT JOIN VOUCHER_USAGE vu ON v.id_voucher = vu.id_voucher
+     GROUP BY v.id_voucher
+     ORDER BY v.id_voucher DESC`,
+    (err, results) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.json({ data: results });
+    },
+  );
 });
 
+// POST tambah voucher
 router.post("/voucher", (req, res) => {
-  const { kode, diskon_persen, max_diskon, min_belanja, kuota } = req.body;
+  const { kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user } = req.body;
   if (!kode || !diskon_persen) return res.status(400).json({ message: "Kode & diskon wajib" });
-  db.query("INSERT INTO VOUCHER (kode, diskon_persen, max_diskon, min_belanja, kuota) VALUES (?, ?, ?, ?, ?)", [kode.toUpperCase(), diskon_persen, max_diskon || null, min_belanja || 0, kuota || 100], (err) => {
-    if (err) return res.status(500).json({ message: "Error" });
-    res.status(201).json({ message: "Voucher ditambahkan" });
-  });
+
+  db.query(
+    "INSERT INTO VOUCHER (kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user) VALUES (?, ?, ?, ?, ?, ?)",
+    [kode.toUpperCase(), diskon_persen, max_diskon || null, min_belanja || 0, kuota || 100, max_usage_per_user || 1],
+    (err) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.status(201).json({ message: "Voucher ditambahkan" });
+    },
+  );
 });
 
+// PUT update voucher
 router.put("/voucher/:id", (req, res) => {
-  const { kode, diskon_persen, max_diskon, min_belanja, kuota } = req.body;
-  db.query("UPDATE VOUCHER SET kode=?, diskon_persen=?, max_diskon=?, min_belanja=?, kuota=? WHERE id_voucher=?", [kode.toUpperCase(), diskon_persen, max_diskon, min_belanja, kuota, req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: "Error" });
-    res.json({ message: "Voucher diupdate" });
-  });
+  const { kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user } = req.body;
+  db.query(
+    "UPDATE VOUCHER SET kode=?, diskon_persen=?, max_diskon=?, min_belanja=?, kuota=?, max_usage_per_user=? WHERE id_voucher=?",
+    [kode.toUpperCase(), diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user || 1, req.params.id],
+    (err) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.json({ message: "Voucher diupdate" });
+    },
+  );
 });
 
+// DELETE voucher
 router.delete("/voucher/:id", (req, res) => {
-  db.query("DELETE FROM VOUCHER WHERE id_voucher = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: "Error" });
-    res.json({ message: "Voucher dihapus" });
+  db.query("DELETE FROM VOUCHER_USAGE WHERE id_voucher = ?", [req.params.id], (err) => {
+    db.query("DELETE FROM VOUCHER WHERE id_voucher = ?", [req.params.id], (err) => {
+      if (err) return res.status(500).json({ message: "Error" });
+      res.json({ message: "Voucher dihapus" });
+    });
   });
 });
 

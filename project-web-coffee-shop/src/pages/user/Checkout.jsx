@@ -12,6 +12,7 @@ const Checkout = ({ isDark }) => {
   const [validationMessage, setValidationMessage] = useState("");
   const [kodeVoucher, setKodeVoucher] = useState("");
   const [voucher, setVoucher] = useState(null);
+  const [voucherMsg, setVoucherMsg] = useState({ type: "", text: "" }); // ✅ state pesan voucher
 
   const [formData, setFormData] = useState({ nama: "", telepon: "", alamat: "", pembayaran: "Transfer Bank" });
   const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -39,22 +40,34 @@ const Checkout = ({ isDark }) => {
     } catch (err) {}
   };
 
+  // ✅ Fungsi cek voucher dengan notif bagus
   const cekVoucher = async () => {
-    if (!kodeVoucher.trim()) return alert("Masukkan kode voucher");
-    try {
-      const res = await axios.post("http://localhost:5000/api/user/voucher", { kode: kodeVoucher.toUpperCase(), subtotal }, { headers: { Authorization: `Bearer ${token}` } });
-      setVoucher(res.data.data);
-      alert(`Voucher ${res.data.data.kode} berhasil!`);
-    } catch (err) {
-      alert(err.response?.data?.message || "Voucher tidak valid");
+    if (!kodeVoucher.trim()) {
+      setVoucherMsg({ type: "error", text: "Masukkan kode voucher terlebih dahulu!" });
       setVoucher(null);
+      return;
     }
+    try {
+      const res = await axios.post("http://localhost:5000/api/user/voucher", { kode: kodeVoucher.toUpperCase(), subtotal, userId: user.id }, { headers: { Authorization: `Bearer ${token}` } });
+      setVoucher(res.data.data);
+      setVoucherMsg({ type: "success", text: `Voucher ${res.data.data.kode} berhasil digunakan! Diskon Rp ${res.data.data.diskon.toLocaleString("id-ID")}` });
+    } catch (err) {
+      setVoucher(null);
+      setVoucherMsg({ type: "error", text: err.response?.data?.message || "Voucher tidak valid" });
+    }
+  };
+
+  // ✅ Hapus voucher
+  const hapusVoucher = () => {
+    setVoucher(null);
+    setVoucherMsg({ type: "", text: "" });
+    setKodeVoucher("");
   };
 
   const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(angka));
   const subtotal = items.reduce((total, item) => total + item.harga_kopi * item.qty, 0);
   const ongkir = items.length > 0 ? 10000 : 0;
-  const diskon = voucher ? voucher.diskon : subtotal >= 100000 ? 10000 : 0;
+  const diskon = voucher ? voucher.diskon : 0;
   const total = subtotal + ongkir - diskon;
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const pilihMetode = (metode) => setFormData({ ...formData, pembayaran: metode });
@@ -107,6 +120,7 @@ const Checkout = ({ isDark }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-12">
           <div className="space-y-12">
+            {/* ALAMAT */}
             <section className={`${cardBg} border-4 ${b} p-8 shadow-[8px_8px_0px_0px] ${shadow}`}>
               <h2 className="text-2xl font-black uppercase mb-8 bg-[#00F5D4] p-2 inline-block border-2 border-[#121212] text-black">Alamat Pengiriman</h2>
               <div className="space-y-6">
@@ -141,6 +155,7 @@ const Checkout = ({ isDark }) => {
               </div>
             </section>
 
+            {/* VOUCHER */}
             <section className={`${cardBg} border-4 ${b} p-8 shadow-[8px_8px_0px_0px] ${shadow}`}>
               <h2 className="text-2xl font-black uppercase mb-6">Kode Voucher</h2>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -148,19 +163,46 @@ const Checkout = ({ isDark }) => {
                   type="text"
                   placeholder="CONTOH: KOPIHEMAT"
                   value={kodeVoucher}
-                  onChange={(e) => setKodeVoucher(e.target.value.toUpperCase())}
+                  onChange={(e) => {
+                    setKodeVoucher(e.target.value.toUpperCase());
+                    setVoucherMsg({ type: "", text: "" });
+                  }}
                   className={`flex-1 ${cardBg} border-4 ${b} px-4 py-4 font-black text-sm outline-none uppercase shadow-[4px_4px_0px_0px] ${shadow} transition-all`}
+                  disabled={!!voucher}
                 />
-                <button
-                  onClick={cekVoucher}
-                  className={`bg-[#FFB703] text-black border-4 ${b} px-8 py-4 font-black text-sm uppercase shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all`}
-                >
-                  Pakai
-                </button>
+                {voucher ? (
+                  <button
+                    onClick={hapusVoucher}
+                    className="bg-red-400 text-black border-4 border-[#121212] px-8 py-4 font-black text-sm uppercase shadow-[4px_4px_0px_0px_#121212] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                  >
+                    Hapus
+                  </button>
+                ) : (
+                  <button
+                    onClick={cekVoucher}
+                    className="bg-[#FFB703] text-black border-4 border-[#121212] px-8 py-4 font-black text-sm uppercase shadow-[4px_4px_0px_0px_#121212] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                  >
+                    Pakai
+                  </button>
+                )}
               </div>
-              {voucher && <p className="mt-4 text-xs font-black uppercase bg-green-100 border-3 border-green-600 text-green-700 px-3 py-2 inline-block">Voucher {voucher.kode} Aktif</p>}
+
+              {/* ✅ Notif voucher */}
+              {voucherMsg.text && (
+                <div className={`mt-4 border-4 px-4 py-3 font-black text-xs uppercase ${voucherMsg.type === "success" ? "bg-green-100 border-green-600 text-green-700" : "bg-red-100 border-red-500 text-red-700"}`}>{voucherMsg.text}</div>
+              )}
+
+              {/* Info voucher aktif */}
+              {voucher && (
+                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase opacity-70">
+                  <span>Min Belanja: Rp {Number(voucher.min_belanja).toLocaleString("id-ID")}</span>
+                  <span>|</span>
+                  <span>Max Potongan: Rp {Number(voucher.max_diskon).toLocaleString("id-ID")}</span>
+                </div>
+              )}
             </section>
 
+            {/* PEMBAYARAN */}
             <section className={`${cardBg} border-4 ${b} p-8 shadow-[8px_8px_0px_0px] ${shadow}`}>
               <h2 className="text-2xl font-black uppercase mb-6">Pilih Pembayaran</h2>
               <div className="grid md:grid-cols-2 gap-4">
@@ -176,6 +218,7 @@ const Checkout = ({ isDark }) => {
               </div>
             </section>
 
+            {/* PRODUK */}
             <section className={`${cardBg} border-4 ${b} p-8 shadow-[8px_8px_0px_0px] ${shadow}`}>
               <h2 className="text-2xl font-black uppercase mb-6">Produk Dipesan</h2>
               {items.length === 0 ? (
@@ -197,6 +240,7 @@ const Checkout = ({ isDark }) => {
             </section>
           </div>
 
+          {/* RINGKASAN */}
           <aside className="h-fit sticky top-28">
             <div className={`${darkBg} text-white border-4 ${b} p-6 shadow-[8px_8px_0px_0px] ${shadow}`}>
               <h2 className="text-xl font-black uppercase mb-8">Ringkasan</h2>
@@ -216,8 +260,7 @@ const Checkout = ({ isDark }) => {
                   </div>
                 )}
               </div>
-              <div className={`bg-white text-black border-4 ${b} p-4 mb-8`}>
-                {" "}
+              <div className="bg-white text-black border-4 border-[#121212] p-4 mb-8">
                 <div className="flex justify-between">
                   <span className="font-black text-xs uppercase">Total</span>
                   <span className="font-black text-xl">{formatRupiah(total)}</span>
@@ -226,7 +269,7 @@ const Checkout = ({ isDark }) => {
               <button
                 onClick={handleCheckout}
                 disabled={items.length === 0}
-                className={`w-full h-14 border-4 ${b} bg-[#00F5D4] text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-30`}
+                className="w-full h-14 border-4 border-[#121212] bg-[#00F5D4] text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-30"
               >
                 Bayar Sekarang
               </button>
@@ -259,14 +302,14 @@ const Checkout = ({ isDark }) => {
                   <button
                     onClick={m.onConfirm}
                     disabled={m.loading}
-                    className={`w-full h-12 border-4 ${b} bg-[#00F5D4] text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                    className="w-full h-12 border-4 border-[#121212] bg-[#00F5D4] text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                   >
                     {m.loading ? "Memproses..." : "OK"}
                   </button>
                   {m.onCancel && (
                     <button
                       onClick={m.onCancel}
-                      className={`w-full h-12 border-4 ${b} bg-stone-100 text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
+                      className="w-full h-12 border-4 border-[#121212] bg-stone-100 text-black font-black uppercase text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                     >
                       Batal
                     </button>

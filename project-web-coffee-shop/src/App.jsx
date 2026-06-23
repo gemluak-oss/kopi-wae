@@ -27,25 +27,32 @@ import Keranjang from "./pages/user/Keranjang";
 function App() {
   const { isDark, setIsDark } = useTheme();
 
+  // ✅ Cek localStorage SEKARANG juga (bukan cuma pas login)
   const [role, setRole] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    return user?.role || "guest";
+    const token = localStorage.getItem("token");
+    if (token && user) return user.role || "guest";
+    return "guest";
   });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setRole("guest");
+    window.location.href = "/login";
   };
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login setRole={setRole} isDark={isDark} />} />
-        <Route path="/register" element={<Register isDark={isDark} />} />
+        {/* PUBLIC */}
+        <Route path="/login" element={role !== "guest" ? <Navigate to={role === "admin" ? "/admin" : "/home"} replace /> : <Login setRole={setRole} isDark={isDark} />} />
+        <Route path="/register" element={role !== "guest" ? <Navigate to={role === "admin" ? "/admin" : "/home"} replace /> : <Register isDark={isDark} />} />
 
-        <Route path="/admin" element={role === "admin" ? <AdminLayout onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} /> : <Navigate to="/login" />}>
+        {/* ✅ ADMIN */}
+        <Route path="/admin" element={role === "admin" ? <AdminLayout onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} /> : <Navigate to={role === "guest" ? "/login" : "/home"} replace />}>
           <Route index element={<Dashboard isDark={isDark} />} />
+          <Route path="dashboard" element={<Dashboard isDark={isDark} />} />
           <Route path="kategori" element={<ManajemenKategori isDark={isDark} />} />
           <Route path="produk" element={<ManajemenProduk isDark={isDark} />} />
           <Route path="pesanan" element={<ManajemenPesanan isDark={isDark} />} />
@@ -55,6 +62,7 @@ function App() {
           <Route path="voucher" element={<ManajemenVoucher isDark={isDark} />} />
         </Route>
 
+        {/* ✅ USER */}
         <Route path="/home" element={<UserLayout role={role} onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} />}>
           <Route index element={<Home isDark={isDark} />} />
           <Route path="produk" element={<ListProduk isDark={isDark} />} />
@@ -66,8 +74,9 @@ function App() {
           <Route path="profil" element={role === "user" ? <Profil isDark={isDark} /> : <Navigate to="/login" />} />
         </Route>
 
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        {/* ✅ REDIRECT KALO ADMIN COBA BUKA / */}
+        <Route path="/" element={<Navigate to={role === "admin" ? "/admin/dashboard" : "/home"} replace />} />
+        <Route path="*" element={<Navigate to={role === "admin" ? "/admin/dashboard" : "/home"} replace />} />
       </Routes>
     </Router>
   );
