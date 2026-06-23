@@ -83,7 +83,7 @@ CREATE DATABASE db_kopi_wae;
 Jalankan script SQL berikut untuk membuat tabel:
 
 ```sql
--- USER table
+-- 2. Tabel USER
 CREATE TABLE USER (
     id_user INT NOT NULL AUTO_INCREMENT,
     user_name VARCHAR(255) NOT NULL,
@@ -95,18 +95,19 @@ CREATE TABLE USER (
     PRIMARY KEY (id_user)
 );
 
--- KATEGORI table
+-- 3. Tabel KATEGORI
 CREATE TABLE KATEGORI (
     id_kategori INT NOT NULL AUTO_INCREMENT,
     nama_kategori VARCHAR(255) NOT NULL,
     PRIMARY KEY (id_kategori)
 );
 
--- KOPI table
+-- 4. Tabel KOPI
 CREATE TABLE KOPI (
     id_kopi INT NOT NULL AUTO_INCREMENT,
     id_kategori INT NOT NULL,
     nama_kopi VARCHAR(255) NOT NULL,
+    deskripsi TEXT,
     harga_kopi DECIMAL(10,2) NOT NULL,
     stok INT NOT NULL DEFAULT 0,
     stok_minimal INT NOT NULL DEFAULT 0,
@@ -115,7 +116,7 @@ CREATE TABLE KOPI (
     FOREIGN KEY (id_kategori) REFERENCES KATEGORI(id_kategori)
 );
 
--- KERANJANG table
+-- 5. Tabel KERANJANG
 CREATE TABLE KERANJANG (
     id_keranjang INT NOT NULL AUTO_INCREMENT,
     id_user INT NOT NULL,
@@ -123,7 +124,7 @@ CREATE TABLE KERANJANG (
     FOREIGN KEY (id_user) REFERENCES USER(id_user) ON DELETE CASCADE
 );
 
--- ITEM_KERANJANG table
+-- 6. Tabel ITEM_KERANJANG
 CREATE TABLE ITEM_KERANJANG (
     id_itemkeranjang INT NOT NULL AUTO_INCREMENT,
     id_keranjang INT NOT NULL,
@@ -134,7 +135,7 @@ CREATE TABLE ITEM_KERANJANG (
     FOREIGN KEY (id_kopi) REFERENCES KOPI(id_kopi) ON DELETE CASCADE
 );
 
--- TRANSAKSI table
+-- 7. Tabel TRANSAKSI
 CREATE TABLE TRANSAKSI (
     id_transaksi INT NOT NULL AUTO_INCREMENT,
     id_user INT NOT NULL,
@@ -145,7 +146,7 @@ CREATE TABLE TRANSAKSI (
     FOREIGN KEY (id_user) REFERENCES USER(id_user)
 );
 
--- DETAIL_TRANSAKSI table
+-- 8. Tabel DETAIL_TRANSAKSI
 CREATE TABLE DETAIL_TRANSAKSI (
     id_detail INT NOT NULL AUTO_INCREMENT,
     id_transaksi INT NOT NULL,
@@ -158,7 +159,7 @@ CREATE TABLE DETAIL_TRANSAKSI (
     FOREIGN KEY (id_kopi) REFERENCES KOPI(id_kopi)
 );
 
--- PEMBAYARAN table
+-- 9. Tabel PEMBAYARAN
 CREATE TABLE PEMBAYARAN (
     id_pembayaran INT NOT NULL AUTO_INCREMENT,
     id_transaksi INT NOT NULL,
@@ -169,17 +170,18 @@ CREATE TABLE PEMBAYARAN (
     FOREIGN KEY (id_transaksi) REFERENCES TRANSAKSI(id_transaksi)
 );
 
--- VOUCHER table
+-- 10. Tabel VOUCHER
 CREATE TABLE VOUCHER (
     id_voucher INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     kode VARCHAR(50) NOT NULL UNIQUE,
     diskon_persen INT NOT NULL,
     max_diskon DECIMAL(10,2),
     min_belanja DECIMAL(10,2) DEFAULT 0,
-    kuota INT DEFAULT 100
+    kuota INT DEFAULT 100,
+    max_usage_per_user INT DEFAULT 1
 );
 
--- VOUCHER_USAGE table (tracking pemakaian voucher per user)
+-- 11. Tabel VOUCHER_USAGE (tracking pemakaian voucher)
 CREATE TABLE VOUCHER_USAGE (
     id_usage INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     id_user INT NOT NULL,
@@ -190,9 +192,6 @@ CREATE TABLE VOUCHER_USAGE (
     FOREIGN KEY (id_voucher) REFERENCES VOUCHER(id_voucher) ON DELETE CASCADE,
     FOREIGN KEY (id_transaksi) REFERENCES TRANSAKSI(id_transaksi) ON DELETE SET NULL
 );
-
--- Alter VOUCHER untuk limit per user
-ALTER TABLE VOUCHER ADD COLUMN max_usage_per_user INT DEFAULT 1 AFTER kuota;
 ```
 
 ### Insert Data Dummy
