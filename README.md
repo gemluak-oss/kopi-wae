@@ -37,6 +37,7 @@ kopi-wae/
 ## Fitur
 
 ### User
+
 - Register & Login
 - Home (produk terbaru)
 - List produk + filter kategori
@@ -51,6 +52,7 @@ kopi-wae/
 - Notifikasi voucher sukses/gagal di checkout
 
 ### Admin
+
 - Dashboard dengan statistik & top kopi
 - Manajemen kategori (CRUD)
 - Manajemen produk (CRUD) + upload gambar
@@ -230,6 +232,7 @@ npm install
 ```
 
 Dependencies yang terinstall:
+
 - `express` - Web framework
 - `cors` - Cross-Origin Resource Sharing
 - `mysql2` - MySQL driver
@@ -250,7 +253,7 @@ Server berjalan di:
 http://localhost:5000
 ```
 
-**Catatan:** Folder `uploads/` akan dibuat otomatis untuk menyimpan gambar yang diupload. Pastikan folder ini *writable*.
+**Catatan:** Folder `uploads/` akan dibuat otomatis untuk menyimpan gambar yang diupload. Pastikan folder ini _writable_.
 
 ### 4. Setup Frontend
 
@@ -335,21 +338,21 @@ JWT_SECRET=kopi_wae_secret_key_2024
 Edit file `kopi-wae-backend/config/db.js`:
 
 ```javascript
-const mysql = require('mysql2');
+const mysql = require("mysql2");
 
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'db_kopi_wae'
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "db_kopi_wae",
 });
 
 db.connect((err) => {
   if (err) {
-    console.error('Database connection failed:', err);
+    console.error("Database connection failed:", err);
     return;
   }
-  console.log('Database connected!');
+  console.log("Database connected!");
 });
 
 module.exports = db;
@@ -358,26 +361,32 @@ module.exports = db;
 ## Troubleshooting
 
 ### Port sudah digunakan
+
 Jika port 5000 sudah dipakai, ubah di `kopi-wae-backend/index.js`:
+
 ```javascript
 const PORT = 5000; // ganti ke 5001 atau lainnya
 ```
 
 ### Nodemon tidak ditemukan
+
 ```bash
 npm install -g nodemon
 ```
 
 ### Koneksi database gagal
+
 - Pastikan MySQL sudah berjalan (XAMPP/Laragon)
 - Cek username & password di `config/db.js` atau `.env`
 - Pastikan database `db_kopi_wae` sudah dibuat
 
 ### Token expired / 401 Unauthorized
+
 - Logout lalu login kembali
 - Token JWT expired setelah 1 hari
 
 ### Upload gambar gagal
+
 - Pastikan folder `uploads/` ada di `kopi-wae-backend/`
 - Cek limit file size di `index.js` (default 50MB)
 
@@ -390,6 +399,7 @@ DROP DATABASE db_kopi_wae;
 CREATE DATABASE db_kopi_wae;
 -- Kemudian jalankan ulang script CREATE TABLE + INSERT data dummy di atas
 ```
+
 ## License
 
 See the [LICENSE](LICENSE) file for details.

@@ -12,7 +12,6 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("ISI TOKEN:", decoded); // ✅ TAROH DISINI
     req.user = decoded;
     next();
   } catch (error) {
