@@ -3,41 +3,32 @@ import axios from "axios";
 
 export default function ManajemenPesanan({ isDark }) {
   const [pesanan, setPesanan] = useState([]);
-  const [allPesanan, setAllPesanan] = useState([]); // Simpan semua data
+  const [allPesanan, setAllPesanan] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("semua");
   const token = localStorage.getItem("token");
 
-  const b = isDark ? "border-white" : "border-[#1A1A1A]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#1A1A1A]";
-  const mutedBg = isDark ? "bg-gray-700" : "bg-[#EAE8E1]";
+  const cardBg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-700" : "border-slate-200";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-500";
 
   useEffect(() => {
     fetchPesanan();
-  }, []); // Hanya fetch sekali saat mount
+  }, []);
 
-  // Filter data lokal saat filterStatus berubah
   useEffect(() => {
-    if (filterStatus === "semua") {
-      setPesanan(allPesanan);
-    } else {
-      setPesanan(allPesanan.filter((o) => o.status_pesanan === filterStatus));
-    }
+    if (filterStatus === "semua") setPesanan(allPesanan);
+    else setPesanan(allPesanan.filter((o) => o.status_pesanan === filterStatus));
   }, [filterStatus, allPesanan]);
 
   const fetchPesanan = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/pesanan", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get("http://localhost:5000/api/admin/pesanan", { headers: { Authorization: `Bearer ${token}` } });
       setAllPesanan(res.data.data);
       setPesanan(res.data.data);
       setIsLoading(false);
     } catch (err) {
-      console.error("Gagal ambil pesanan:", err);
       setIsLoading(false);
     }
   };
@@ -45,143 +36,155 @@ export default function ManajemenPesanan({ isDark }) {
   const updateStatus = async (id, newStatus) => {
     try {
       await axios.put(`http://localhost:5000/api/admin/pesanan/${id}`, { status_pesanan: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
-      fetchPesanan(); // Refresh data setelah update
+      fetchPesanan();
     } catch (err) {
       alert("Gagal update status");
     }
   };
 
-  const formatRupiah = (angka) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(angka);
+  const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(angka);
 
-  const getStatusColor = (status) => {
-    const c = {
-      menunggu: "bg-[#FFC700] text-black",
-      diproses: "bg-[#00F5D4] text-black",
-      dikirim: "bg-purple-300 text-black",
-      selesai: "bg-[#38EF7D] text-black",
-      dibatalkan: "bg-red-400 text-black",
+  const getStatusStyle = (status) => {
+    const styles = {
+      menunggu: "bg-amber-100 text-amber-700 border-amber-200",
+      diproses: "bg-blue-100 text-blue-700 border-blue-200",
+      dikirim: "bg-purple-100 text-purple-700 border-purple-200",
+      selesai: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      dibatalkan: "bg-red-100 text-red-700 border-red-200",
     };
-    return c[status] || "bg-white text-black";
+    return styles[status] || "bg-slate-100 text-slate-700 border-slate-200";
   };
 
-  // Menggunakan allPesanan untuk perhitungan statistik
   const totalPesanan = allPesanan.length;
   const pesananBaru = allPesanan.filter((o) => o.status_pesanan === "menunggu").length;
   const pesananDiproses = allPesanan.filter((o) => o.status_pesanan === "diproses" || o.status_pesanan === "dikirim").length;
   const pesananSelesai = allPesanan.filter((o) => o.status_pesanan === "selesai").length;
+  const totalPendapatan = allPesanan.filter((o) => o.status_pesanan === "selesai").reduce((sum, o) => sum + Number(o.total_harga), 0);
 
   if (isLoading)
     return (
-      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
-        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat Pesanan...</div>
-      </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading...
+        </div>
+      </div>
     );
 
   return (
-    <main className={`p-6 min-h-screen font-mono space-y-6 ${bg}`}>
-      <header className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} flex flex-col sm:flex-row justify-between gap-4`}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase">Manajemen Pesanan</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Manajemen Pesanan</h1>
+          <p className={`text-sm ${mutedText} mt-1`}>Kelola dan update status pesanan</p>
         </div>
-        <button onClick={fetchPesanan} className={`px-5 py-3 border-3 ${b} bg-[#00F5D4] text-black font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all`}>
+        <button onClick={fetchPesanan} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-sm font-medium hover:bg-slate-50 transition-all shadow-sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
           Refresh
         </button>
-      </header>
+      </div>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: "Total", value: totalPesanan, color: "" },
-          { label: "Baru", value: pesananBaru, color: "bg-[#FFC700] text-black" },
-          { label: "Diproses", value: pesananDiproses, color: "bg-[#00F5D4] text-black" },
-          { label: "Selesai", value: pesananSelesai, color: "bg-[#38EF7D] text-black" },
+          { label: "Total Orders", value: totalPesanan, icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", color: "text-slate-600" },
+          { label: "Pending", value: pesananBaru, icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-amber-500" },
+          { label: "Processing", value: pesananDiproses, icon: "M13 10V3L4 14h7v7l9-11h-7z", color: "text-blue-500" },
+          { label: "Completed", value: pesananSelesai, icon: "M5 13l4 4L19 7", color: "text-emerald-500" },
+          {
+            label: "Revenue",
+            value: formatRupiah(totalPendapatan),
+            icon: "M12 6v12m-3-2.818l.251.11a3.375 3.375 0 004.496-2.355c.192-.94-.467-1.894-1.423-2.08l-2.241-.437c-.956-.187-1.615-1.14-1.423-2.08a3.375 3.375 0 014.496-2.355l.25.11",
+            color: "text-emerald-600",
+            isCurrency: true,
+          },
         ].map((s, i) => (
-          <div key={i} className={`${s.color || cardBg} p-4 border-4 ${b} shadow-[4px_4px_0px_0px] ${shadow}`}>
-            <p className="text-[10px] font-black uppercase opacity-60">{s.label}</p>
-            <p className="text-2xl font-black mt-1">{s.value}</p>
+          <div key={i} className={`${cardBg} rounded-xl border ${border} p-4 shadow-sm`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{s.label}</span>
+              <svg className={`w-4 h-4 ${s.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={s.icon} />
+              </svg>
+            </div>
+            <p className={`text-xl font-bold ${s.isCurrency ? "text-sm" : ""}`}>{s.value}</p>
           </div>
         ))}
-      </section>
-
-      <div className={`${cardBg} p-4 border-4 ${b} shadow-[4px_4px_0px_0px] ${shadow}`}>
-        <div className="flex flex-wrap gap-2">
-          {["semua", "menunggu", "diproses", "dikirim", "selesai", "dibatalkan"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-4 py-2 border-2 ${b} font-black text-xs uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all ${
-                filterStatus === s ? (isDark ? "bg-white text-black" : "bg-black text-white") : cardBg
-              }`}
-            >
-              {s} ({s === "semua" ? totalPesanan : allPesanan.filter((o) => o.status_pesanan === s).length})
-            </button>
-          ))}
-        </div>
       </div>
 
-      <div className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} overflow-x-auto`}>
-        <table className="w-full text-left">
-          <thead>
-            <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase`}>
-              <th className="p-4">ID</th>
-              <th className="p-4">Pelanggan</th>
-              <th className="p-4">Tanggal</th>
-              <th className="p-4 text-right">Total</th>
-              <th className="p-4">Metode</th>
-              <th className="p-4 text-center">Status</th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y-2 divide-current/10 text-xs font-bold uppercase">
-            {pesanan.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="p-8 text-center opacity-50">
-                  Tidak ada pesanan {filterStatus !== "semua" ? `dengan status "${filterStatus}"` : ""}
-                </td>
+      {/* Filter Buttons */}
+      <div className="flex flex-wrap gap-2">
+        {["semua", "menunggu", "diproses", "dikirim", "selesai", "dibatalkan"].map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilterStatus(s)}
+            className={`px-4 py-2 rounded-lg text-xs font-medium capitalize transition-all ${filterStatus === s ? "bg-slate-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          >
+            {s} ({s === "semua" ? totalPesanan : allPesanan.filter((o) => o.status_pesanan === s).length})
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Pelanggan</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tanggal</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Metode</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-28">Aksi</th>
               </tr>
-            ) : (
-              pesanan.map((item) => (
-                <tr key={item.id_transaksi} className="hover:bg-black/5 transition-colors">
-                  <td className="p-4 font-black">#{item.id_transaksi}</td>
-                  <td className="p-4">{item.pelanggan}</td>
-                  <td className="p-4 opacity-80">{new Date(item.tgl_transaksi).toLocaleDateString("id-ID")}</td>
-                  <td className="p-4 text-right font-black">{formatRupiah(item.total_harga)}</td>
-                  <td className="p-4">{item.metode_pembayaran || "-"}</td>
-                  <td className="p-4 text-center">
-                    <select
-                      value={item.status_pesanan}
-                      onChange={(e) => updateStatus(item.id_transaksi, e.target.value)}
-                      className={`text-[10px] font-black uppercase text-center p-2 border-2 ${b} cursor-pointer ${getStatusColor(item.status_pesanan)}`}
-                    >
-                      <option value="menunggu">Menunggu</option>
-                      <option value="diproses">Diproses</option>
-                      <option value="dikirim">Dikirim</option>
-                      <option value="selesai">Selesai</option>
-                      <option value="dibatalkan">Dibatalkan</option>
-                    </select>
-                  </td>
-                  <td className="p-4 text-center">
-                    {item.status_pesanan !== "selesai" && item.status_pesanan !== "dibatalkan" ? (
-                      <button
-                        onClick={() => updateStatus(item.id_transaksi, "selesai")}
-                        className={`px-3 py-1.5 border-2 ${b} bg-[#38EF7D] text-black font-black text-[10px] uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                      >
-                        Selesai
-                      </button>
-                    ) : (
-                      <span className="text-[10px] opacity-30">-</span>
-                    )}
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pesanan.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-12 text-center text-sm text-slate-400">
+                    Tidak ada pesanan
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                pesanan.map((item) => (
+                  <tr key={item.id_transaksi} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-mono font-bold">#{item.id_transaksi}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{item.pelanggan}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500">{new Date(item.tgl_transaksi).toLocaleDateString("id-ID")}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-right">{formatRupiah(item.total_harga)}</td>
+                    <td className="px-4 py-3 text-sm">{item.metode_pembayaran || "-"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <select value={item.status_pesanan} onChange={(e) => updateStatus(item.id_transaksi, e.target.value)} className={`text-xs font-medium px-2 py-1 rounded-lg border cursor-pointer ${getStatusStyle(item.status_pesanan)}`}>
+                        <option value="menunggu">Menunggu</option>
+                        <option value="diproses">Diproses</option>
+                        <option value="dikirim">Dikirim</option>
+                        <option value="selesai">Selesai</option>
+                        <option value="dibatalkan">Dibatalkan</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {item.status_pesanan !== "selesai" && item.status_pesanan !== "dibatalkan" ? (
+                        <button onClick={() => updateStatus(item.id_transaksi, "selesai")} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200 hover:bg-emerald-100 transition-all">
+                          Selesai
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-300">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

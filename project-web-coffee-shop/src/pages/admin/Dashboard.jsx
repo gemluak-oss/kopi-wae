@@ -6,11 +6,14 @@ export default function DashboardAdmin({ isDark }) {
   const [isLoading, setIsLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  const b = isDark ? "border-white" : "border-[#1A1A1A]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#FFFDF6] text-[#1A1A1A]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#1A1A1A]";
-  const mutedBg = isDark ? "bg-gray-700" : "bg-[#FFFDF6]";
+  // Financial Dashboard Theme
+  const bg = isDark ? "bg-slate-950" : "bg-slate-50";
+  const cardBg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-700" : "border-slate-200";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-500";
+  const profitColor = "text-emerald-500";
+  const lossColor = "text-red-500";
+  const blueAccent = "text-blue-600";
 
   useEffect(() => {
     fetchDashboard();
@@ -18,9 +21,7 @@ export default function DashboardAdmin({ isDark }) {
 
   const fetchDashboard = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/dashboard", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get("http://localhost:5000/api/admin/dashboard", { headers: { Authorization: `Bearer ${token}` } });
       setStats(res.data);
       setIsLoading(false);
     } catch (err) {
@@ -29,138 +30,149 @@ export default function DashboardAdmin({ isDark }) {
   };
 
   const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(angka);
+  const formatNumber = (num) => new Intl.NumberFormat("id-ID").format(num);
 
-  const getStatusColor = (status) => {
-    const c = { selesai: "bg-[#00F5D4] text-black", diproses: "bg-[#FFC700] text-black", dikirim: "bg-purple-300 text-black", menunggu: "bg-red-400 text-black" };
-    return c[status] || "bg-white text-black";
+  const getStatusBadge = (status) => {
+    const styles = {
+      selesai: "bg-emerald-100 text-emerald-700 border-emerald-300",
+      diproses: "bg-amber-100 text-amber-700 border-amber-300",
+      dikirim: "bg-blue-100 text-blue-700 border-blue-300",
+      menunggu: "bg-red-100 text-red-700 border-red-300",
+    };
+    return styles[status] || "bg-slate-100 text-slate-700 border-slate-300";
   };
 
   if (isLoading)
     return (
-      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
-        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-sm uppercase tracking-widest shadow-[6px_6px_0px_0px] ${shadow}`}>MEMUAT DASHBOARD...</div>
-      </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading Dashboard...
+        </div>
+      </div>
     );
 
   return (
-    <main className={`p-6 md:p-10 min-h-screen font-mono space-y-10 ${bg}`}>
-      {/* HEADER UTAMA */}
-      <header className={`${cardBg} p-6 border-4 ${b} shadow-[8px_8px_0px_0px] ${shadow} flex flex-col md:flex-row md:items-center md:justify-between gap-4`}>
+    <div className="space-y-8">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tight">Dashboard Admin</h1>
-          <p className="text-xs font-bold uppercase opacity-60 mt-1">Ringkasan performa &amp; statistik Kopi Wae</p>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className={`text-sm ${mutedText} mt-1`}>Ringkasan performa bisnis Kopi Wae</p>
         </div>
-        <div className={`text-xs font-black uppercase bg-[#A1A1FF] text-black border-2 ${b} px-4 py-2 shadow-[3px_3px_0px_0px_#1A1A1A]`}>Status: Administrator</div>
-      </header>
-
-      {/* THREE-COLUMN STATS CARD GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Card 1: Pendapatan */}
-        <div className={`${cardBg} border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} p-6 flex items-center justify-between overflow-hidden relative group`}>
-          <div className="space-y-2 z-10">
-            <span className="text-xs font-black uppercase tracking-wider opacity-60 block">[ Total Pendapatan ]</span>
-            <div className="inline-block">
-              <span className={`text-xl lg:text-2xl font-black bg-[#FFC700] text-black border-2 ${b} px-3 py-1 block shadow-[2px_2px_0px_0px_#1A1A1A]`}>{formatRupiah(stats?.pendapatan || 0)}</span>
-            </div>
-          </div>
-          <div className={`p-3 border-4 ${b} bg-white text-black shadow-[3px_3px_0px_0px_#1A1A1A] z-10 shrink-0`}>
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.251.11a3.375 3.375 0 004.496-2.355c.192-.94-.467-1.894-1.423-2.08l-2.241-.437c-.956-.187-1.615-1.14-1.423-2.08a3.375 3.375 0 014.496-2.355l.25.11" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Card 2: Total Produk */}
-        <div className={`${cardBg} border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} p-6 flex items-center justify-between overflow-hidden relative group`}>
-          <div className="space-y-2 z-10">
-            <span className="text-xs font-black uppercase tracking-wider opacity-60 block">[ Koleksi Produk ]</span>
-            <div className="inline-block">
-              <span className={`text-2xl font-black bg-[#A1A1FF] text-black border-2 ${b} px-4 py-1 block shadow-[2px_2px_0px_0px_#1A1A1A]`}>{stats?.total_produk || 0} ITEMS</span>
-            </div>
-          </div>
-          <div className={`p-3 border-4 ${b} bg-white text-black shadow-[3px_3px_0px_0px_#1A1A1A] z-10 shrink-0`}>
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Card 3: Pesanan Baru */}
-        <div className={`${cardBg} border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} p-6 flex items-center justify-between overflow-hidden relative group`}>
-          <div className="space-y-2 z-10">
-            <span className="text-xs font-black uppercase tracking-wider opacity-60 block">[ Pesanan Masuk ]</span>
-            <div className="inline-block">
-              <span className={`text-2xl font-black bg-[#00F5D4] text-black border-2 ${b} px-4 py-1 block shadow-[2px_2px_0px_0px_#1A1A1A]`}>{stats?.pesanan_baru || 0} ORDERS</span>
-            </div>
-          </div>
-          <div className={`p-3 border-4 ${b} bg-white text-black shadow-[3px_3px_0px_0px_#1A1A1A] z-10 shrink-0`}>
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4m0 0h7.5m-7.5 0l-1.5 9.5h10.5l-1.5-9.5" />
-            </svg>
-          </div>
+        <div className="flex items-center gap-2 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          Administrator
         </div>
       </div>
 
-      {/* TOP KOPI TERLARIS */}
-      {stats?.top_kopi?.length > 0 && (
-        <div className={`${cardBg} p-6 border-4 ${b} shadow-[8px_8px_0px_0px] ${shadow}`}>
-          <h2 className="text-sm font-black uppercase tracking-widest mb-6 pb-3 border-b-4 border-dashed border-current flex items-center gap-2">[ DATA ] Top Kopi Terlaris</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {stats.top_kopi.map((item, index) => (
-              <div key={index} className={`p-5 border-4 ${b} ${mutedBg} text-center shadow-[4px_4px_0px_0px] ${shadow} flex flex-col justify-between items-center relative overflow-hidden`}>
-                <div className="absolute top-0 left-0 bg-black text-white px-2 py-0.5 text-[10px] font-black border-r-2 border-b-2 border-current">#{index + 1}</div>
+      {/* METRIC CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Revenue */}
+        <div className={`metric-card ${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+          <div className="flex items-center justify-between mb-4">
+            <span className={`text-xs font-medium uppercase tracking-wider ${mutedText}`}>Total Pendapatan</span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v12m-3-2.818l.251.11a3.375 3.375 0 004.496-2.355c.192-.94-.467-1.894-1.423-2.08l-2.241-.437c-.956-.187-1.615-1.14-1.423-2.08a3.375 3.375 0 014.496-2.355l.25.11"
+                />
+              </svg>
+            </div>
+          </div>
+          <p className="text-2xl font-bold count-up">{formatRupiah(stats?.pendapatan || 0)}</p>
+          <p className={`text-xs mt-2 flex items-center gap-1 ${profitColor}`}>
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+            </svg>
+            Revenue from completed orders
+          </p>
+        </div>
 
-                {/* SVG Pengganti Emoji Cangkir */}
-                <div className="w-12 h-12 border-2 border-current bg-amber-500/10 flex items-center justify-center text-current mt-2 mb-3 shrink-0">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M2,21V19H20V21H2M20,8V5H18V8H20M20,3A2,2 0 0,1 22,5V8A2,2 0 0,1 20,10H18V13A4,4 0 0,1 14,17H8A4,4 0 0,1 4,13V3H20M16,5H6V13A2,2 0 0,0 8,15H14A2,2 0 0,0 16,13V5Z" />
-                  </svg>
+        {/* Products */}
+        <div className={`metric-card ${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+          <div className="flex items-center justify-between mb-4">
+            <span className={`text-xs font-medium uppercase tracking-wider ${mutedText}`}>Total Produk</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-2xl font-bold count-up">{formatNumber(stats?.total_produk || 0)}</p>
+          <p className={`text-xs mt-2 ${mutedText}`}>Active products in catalog</p>
+        </div>
+
+        {/* Orders */}
+        <div className={`metric-card ${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+          <div className="flex items-center justify-between mb-4">
+            <span className={`text-xs font-medium uppercase tracking-wider ${mutedText}`}>Pesanan Masuk</span>
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-2xl font-bold count-up">{formatNumber(stats?.pesanan_baru || 0)}</p>
+          <p className={`text-xs mt-2 ${mutedText}`}>Total orders received</p>
+        </div>
+      </div>
+
+      {/* TOP PRODUCTS + RECENT ORDERS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Kopi */}
+        <div className={`${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+          <h2 className="text-sm font-semibold mb-6 flex items-center gap-2">
+            <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Top Produk Terlaris
+          </h2>
+          <div className="space-y-3">
+            {stats?.top_kopi?.map((item, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700" : i === 1 ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-400"}`}>{i + 1}</span>
+                  <span className="text-sm font-medium">{item.nama_kopi}</span>
                 </div>
+                <span className="text-sm font-semibold text-emerald-600">{item.total_terjual} sold</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                <div className="w-full">
-                  <p className="font-black text-xs uppercase truncate px-1">{item.nama_kopi}</p>
-                  <p className="text-[10px] font-bold uppercase opacity-70 mt-1 bg-black/5 dark:bg-white/10 py-1 border-t-2 border-current border-dashed">{item.total_terjual} Terjual</p>
+        {/* Recent Orders */}
+        <div className={`${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+          <h2 className="text-sm font-semibold mb-6 flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Transaksi Terbaru
+          </h2>
+          <div className="space-y-3">
+            {stats?.pesanan_terbaru?.map((order) => (
+              <div key={order.id_transaksi} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                <div>
+                  <p className="text-sm font-medium">
+                    #{order.id_transaksi} - {order.pelanggan}
+                  </p>
+                  <p className={`text-xs ${mutedText}`}>{new Date(order.tgl_transaksi).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold">{formatRupiah(order.total_harga)}</p>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium border ${getStatusBadge(order.status_pesanan)}`}>{order.status_pesanan}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* TABEL PESANAN TERBARU */}
-      <div className={`${cardBg} p-6 border-4 ${b} shadow-[8px_8px_0px_0px] ${shadow}`}>
-        <h2 className="text-sm font-black uppercase tracking-widest mb-6 pb-3 border-b-4 border-dashed border-current flex items-center gap-2">[ LOG ] Transaksi Masuk Terbaru</h2>
-        <div className="overflow-x-auto border-4 border-current">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase tracking-wider`}>
-                <th className="p-4 border-r-2 border-current">ID Transaksi</th>
-                <th className="p-4 border-r-2 border-current">Nama Pelanggan</th>
-                <th className="p-4 border-r-2 border-current">Total Pembayaran</th>
-                <th className="p-4 border-r-2 border-current text-center">Status Pesanan</th>
-                <th className="p-4">Tanggal Masuk</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y-4 divide-current text-xs font-bold uppercase">
-              {stats?.pesanan_terbaru?.map((order) => (
-                <tr key={order.id_transaksi} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                  <td className="p-4 font-mono font-black opacity-80 border-r-2 border-current">#{order.id_transaksi}</td>
-                  <td className="p-4 border-r-2 border-current">{order.pelanggan}</td>
-                  <td className="p-4 border-r-2 border-current font-black">{formatRupiah(order.total_harga)}</td>
-                  <td className="p-4 text-center border-r-2 border-current">
-                    <span className={`px-3 py-1.5 border-2 ${b} text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_#1A1A1A] ${getStatusColor(order.status_pesanan)}`}>{order.status_pesanan}</span>
-                  </td>
-                  <td className="p-4 opacity-70">{new Date(order.tgl_transaksi).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
-    </main>
+    </div>
   );
 }

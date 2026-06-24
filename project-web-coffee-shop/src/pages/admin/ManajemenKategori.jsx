@@ -4,16 +4,15 @@ import axios from "axios";
 export default function ManajemenKategori({ isDark }) {
   const [kategoriList, setKategoriList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [namaKategori, setNamaKategori] = useState("");
   const [editingId, setEditingId] = useState(null);
   const token = localStorage.getItem("token");
 
-  const b = isDark ? "border-white" : "border-[#1A1A1A]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#1A1A1A]";
-  const mutedBg = isDark ? "bg-gray-700" : "bg-[#EAE8E1]";
-  const inputBg = isDark ? "bg-gray-700" : "bg-[#FFFDF6]";
+  const cardBg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-700" : "border-slate-200";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-500";
+  const inputBg = isDark ? "bg-slate-800 text-white" : "bg-slate-50 text-slate-800";
 
   useEffect(() => {
     fetchKategori();
@@ -29,6 +28,24 @@ export default function ManajemenKategori({ isDark }) {
     }
   };
 
+  const handleOpenAdd = () => {
+    setNamaKategori("");
+    setEditingId(null);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (item) => {
+    setNamaKategori(item.nama_kategori);
+    setEditingId(item.id_kategori);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setNamaKategori("");
+    setEditingId(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!namaKategori.trim()) return;
@@ -38,20 +55,15 @@ export default function ManajemenKategori({ isDark }) {
       } else {
         await axios.post("http://localhost:5000/api/admin/kategori", { nama_kategori: namaKategori }, { headers: { Authorization: `Bearer ${token}` } });
       }
-      setNamaKategori("");
-      setEditingId(null);
+      handleCloseModal();
       fetchKategori();
     } catch (err) {
       alert("Gagal menyimpan kategori");
     }
   };
 
-  const handleEditClick = (item) => {
-    setNamaKategori(item.nama_kategori);
-    setEditingId(item.id_kategori);
-  };
   const handleDelete = async (id) => {
-    if (!window.confirm("Yakin?")) return;
+    if (!window.confirm("Yakin ingin menghapus kategori ini?")) return;
     try {
       await axios.delete(`http://localhost:5000/api/admin/kategori/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchKategori();
@@ -59,94 +71,120 @@ export default function ManajemenKategori({ isDark }) {
       alert("Gagal menghapus");
     }
   };
-  const handleCancelEdit = () => {
-    setNamaKategori("");
-    setEditingId(null);
-  };
 
   if (isLoading)
     return (
-      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
-        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat Kategori...</div>
-      </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading...
+        </div>
+      </div>
     );
 
   return (
-    <main className={`p-6 min-h-screen font-mono space-y-6 ${bg}`}>
-      <header className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
-        <h1 className="text-2xl font-black uppercase">Manajemen Kategori</h1>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`md:col-span-1 ${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
-          <h2 className="text-xs font-black uppercase tracking-widest mb-6 pb-2 border-b-4 border-dashed">{editingId ? "Edit Kategori" : "Kategori Baru"}</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              value={namaKategori}
-              onChange={(e) => setNamaKategori(e.target.value)}
-              placeholder="Nama kategori..."
-              required
-              className={`w-full border-3 ${b} p-3 text-xs font-bold uppercase ${inputBg} shadow-[2px_2px_0px_0px] ${shadow} focus:shadow-none focus:translate-x-0.5 focus:translate-y-0.5 transition-all`}
-            />
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                type="submit"
-                className={`w-full py-3 border-3 ${b} font-black text-xs uppercase shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all ${editingId ? "bg-[#FFC700] text-black" : "bg-[#00F5D4] text-black"}`}
-              >
-                {editingId ? "Simpan" : "Tambah"}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className={`w-full py-2.5 border-3 ${b} ${cardBg} font-black text-xs uppercase shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                >
-                  Batal
-                </button>
-              )}
-            </div>
-          </form>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Manajemen Kategori</h1>
+          <p className={`text-sm ${mutedText} mt-1`}>Kelola kategori produk kopi</p>
         </div>
-
-        <div className={`md:col-span-2 ${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase`}>
-                  <th className="p-4 w-16 text-center">No</th>
-                  <th className="p-4">Nama Kategori</th>
-                  <th className="p-4 text-center w-40">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-current/10 text-xs font-bold uppercase">
-                {kategoriList.map((item, index) => (
-                  <tr key={item.id_kategori} className="hover:bg-black/5 transition-colors">
-                    <td className="p-4 text-center opacity-60">{index + 1}</td>
-                    <td className="p-4 font-black">{item.nama_kategori}</td>
-                    <td className="p-4">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => handleEditClick(item)}
-                          className={`px-3 py-1.5 border-2 ${b} bg-[#FFC700] text-black font-black text-[10px] uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id_kategori)}
-                          className={`px-3 py-1.5 border-2 ${b} bg-red-400 text-black font-black text-[10px] uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">{kategoriList.length} categories</span>
+          <button onClick={handleOpenAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Kategori
+          </button>
         </div>
       </div>
-    </main>
+
+      {/* Table */}
+      <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">No</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Kategori</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-40">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {kategoriList.length === 0 ? (
+              <tr>
+                <td colSpan="3" className="px-6 py-12 text-center text-sm text-slate-400">
+                  Belum ada kategori
+                </td>
+              </tr>
+            ) : (
+              kategoriList.map((item, index) => (
+                <tr key={item.id_kategori} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-slate-400">{index + 1}</td>
+                  <td className="px-6 py-4 text-sm font-medium">{item.nama_kategori}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-center gap-2">
+                      <button onClick={() => handleOpenEdit(item)} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200 hover:bg-amber-100 transition-all">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(item.id_kategori)} className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-medium border border-red-200 hover:bg-red-100 transition-all">
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className={`${cardBg} rounded-2xl border ${border} w-full max-w-md shadow-2xl`}>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold">{editingId ? "Edit Kategori" : "Tambah Kategori"}</h2>
+              <button onClick={handleCloseModal} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-all">
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Nama Kategori</label>
+                <input
+                  type="text"
+                  value={namaKategori}
+                  onChange={(e) => setNamaKategori(e.target.value)}
+                  placeholder="Masukkan nama kategori..."
+                  required
+                  autoFocus
+                  className={`w-full rounded-lg border ${border} ${inputBg} px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all`}
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <button type="button" onClick={handleCloseModal} className={`flex-1 py-2.5 rounded-lg border ${border} text-sm font-medium hover:bg-slate-50 transition-all`}>
+                  Batal
+                </button>
+                <button type="submit" className="flex-1 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all shadow-sm">
+                  {editingId ? "Simpan Perubahan" : "Tambah Kategori"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

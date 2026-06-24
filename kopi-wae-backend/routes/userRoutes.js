@@ -24,9 +24,9 @@ router.get("/kategori", (req, res) => {
 
 // ==================== VOUCHER ====================
 
-// Get voucher aktif dengan info pemakaian user
-router.get("/voucher/aktif/:userId", (req, res) => {
-  const { userId } = req.params;
+// Get voucher aktif dengan info pemakaian user (QUERY PARAM)
+router.get("/voucher/aktif", (req, res) => {
+  const userId = req.query.userId || "guest";
 
   const query = `
     SELECT v.*, 
@@ -176,7 +176,7 @@ router.post("/checkout", authMiddleware, userController.prosesCheckout);
 
 // ==================== HISTORY ====================
 
-// ✅ DETAIL (harus diatas /:userId)
+// Detail transaksi
 router.get("/history/detail/:id", authMiddleware, (req, res) => {
   const { id } = req.params;
 

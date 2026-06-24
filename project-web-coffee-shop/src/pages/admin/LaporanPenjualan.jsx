@@ -6,11 +6,9 @@ export default function LaporanPenjualan({ isDark }) {
   const [isLoading, setIsLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  const b = isDark ? "border-white" : "border-[#1A1A1A]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#1A1A1A]";
-  const mutedBg = isDark ? "bg-gray-700" : "bg-[#EAE8E1]";
+  const cardBg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-700" : "border-slate-200";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-500";
 
   useEffect(() => {
     fetchLaporan();
@@ -30,6 +28,7 @@ export default function LaporanPenjualan({ isDark }) {
   const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(angka));
   const totalPendapatan = laporan.reduce((sum, item) => sum + Number(item.total), 0);
   const totalTransaksi = laporan.reduce((sum, item) => sum + item.jumlah, 0);
+  const avgHarian = laporan.length > 0 ? totalPendapatan / laporan.length : 0;
   const maxValue = Math.max(...laporan.map((item) => item.total), 1);
 
   const exportCSV = () => {
@@ -47,90 +46,139 @@ export default function LaporanPenjualan({ isDark }) {
 
   if (isLoading)
     return (
-      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
-        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat Laporan...</div>
-      </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading...
+        </div>
+      </div>
     );
 
   return (
-    <main className={`p-6 min-h-screen font-mono space-y-6 ${bg}`}>
-      <header className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase">Laporan Penjualan</h1>
-          <p className="text-xs font-bold uppercase opacity-60 mt-1">Ringkasan 30 hari terakhir</p>
+          <h1 className="text-2xl font-bold tracking-tight">Laporan Penjualan</h1>
+          <p className={`text-sm ${mutedText} mt-1`}>Ringkasan 30 hari terakhir</p>
         </div>
-        <button onClick={exportCSV} className={`px-5 py-3 border-3 ${b} ${cardBg} font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all`}>
+        <button
+          onClick={exportCSV}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all shadow-sm ${
+            isDark ? "bg-slate-800 border-slate-600 text-slate-200 hover:bg-slate-700" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           Export CSV
         </button>
-      </header>
+      </div>
 
-      <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "Volume Transaksi", value: `${totalTransaksi} Transaksi`, color: "" },
-          { label: "Bruto Omzet", value: formatRupiah(totalPendapatan), color: "bg-[#00F5D4] text-black" },
-          { label: "Rata-Rata Harian", value: formatRupiah(totalPendapatan / (laporan.length || 1)), color: "bg-purple-300 text-black" },
+          {
+            label: "Volume Transaksi",
+            value: `${totalTransaksi} Transactions`,
+            icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+            color: "text-blue-500",
+            bgLight: "",
+            borderLight: "border-slate-200",
+            bgDark: "",
+            borderDark: "border-slate-700",
+          },
+          {
+            label: "Gross Revenue",
+            value: formatRupiah(totalPendapatan),
+            icon: "M12 6v12m-3-2.818l.251.11a3.375 3.375 0 004.496-2.355c.192-.94-.467-1.894-1.423-2.08l-2.241-.437c-.956-.187-1.615-1.14-1.423-2.08a3.375 3.375 0 014.496-2.355l.25.11",
+            color: "text-emerald-500",
+            bgLight: "bg-emerald-50/50",
+            borderLight: "border-emerald-200",
+            bgDark: "bg-emerald-950/50",
+            borderDark: "border-emerald-800",
+          },
+          {
+            label: "Daily Average",
+            value: formatRupiah(avgHarian),
+            icon: "M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z",
+            color: "text-purple-500",
+            bgLight: "bg-purple-50/50",
+            borderLight: "border-purple-200",
+            bgDark: "bg-purple-950/50",
+            borderDark: "border-purple-800",
+          },
         ].map((s, i) => (
-          <div key={i} className={`${s.color || cardBg} p-5 border-4 ${b} shadow-[4px_4px_0px_0px] ${shadow}`}>
-            <p className="text-[10px] font-black uppercase opacity-60">{s.label}</p>
-            <p className="text-xl font-black mt-1">{s.value}</p>
+          <div key={i} className={`${cardBg} rounded-xl border ${isDark ? `${s.borderDark} ${s.bgDark}` : `${s.borderLight} ${s.bgLight}`} p-5 shadow-sm`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{s.label}</span>
+              <svg className={`w-4 h-4 ${s.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={s.icon} />
+              </svg>
+            </div>
+            <p className="text-xl font-bold">{s.value}</p>
           </div>
         ))}
-      </section>
+      </div>
 
-      <div className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
-        <h2 className="text-xs font-black uppercase tracking-widest mb-6 border-b-2 pb-2">Grafik Pendapatan</h2>
-        <div className="flex items-end gap-2 h-64 overflow-x-auto pb-2">
+      {/* Chart */}
+      <div className={`${cardBg} rounded-xl border ${border} p-6 shadow-sm`}>
+        <h2 className="text-sm font-semibold mb-6 flex items-center gap-2">
+          <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          </svg>
+          Revenue Chart
+        </h2>
+        <div className="flex items-end gap-2 h-56 overflow-x-auto pb-2">
           {laporan.map((item, index) => {
             const height = maxValue > 0 ? (item.total / maxValue) * 100 : 0;
             return (
-              <div key={index} className="flex-1 flex flex-col items-center justify-end h-full min-w-[50px]">
-                <span className="text-[8px] font-black mb-1.5 whitespace-nowrap">{item.total > 0 ? formatRupiah(item.total) : ""}</span>
+              <div key={index} className="flex-1 flex flex-col items-center justify-end h-full min-w-[40px] group">
+                <span className="text-[9px] font-medium text-slate-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{formatRupiah(item.total)}</span>
                 <div
-                  className="w-full bg-[#FFC700] hover:bg-[#00F5D4] border-2 border-[#1A1A1A] transition-all cursor-pointer shadow-[2px_2px_0px_0px] shadow-[#1A1A1A]"
-                  style={{ height: `${Math.max(height, 4)}%`, minHeight: item.total > 0 ? "16px" : "0px" }}
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 rounded-t transition-all cursor-pointer"
+                  style={{ height: `${Math.max(height, 2)}%`, minHeight: item.total > 0 ? "8px" : "0px" }}
                   title={`${item.tanggal}: ${formatRupiah(item.total)}`}
-                ></div>
-                <span className="text-[9px] font-black uppercase opacity-70 mt-3 text-center">
-                  {item.tanggal.split(" ")[0]}
-                  <br />
-                  <span className="text-[8px] opacity-60">{item.tanggal.split(" ")[1]}</span>
-                </span>
+                />
+                <span className="text-[9px] font-medium text-slate-400 mt-2 text-center truncate w-full">{item.tanggal.split(" ")[0]}</span>
               </div>
             );
           })}
         </div>
-        <div className="flex justify-between items-center mt-6 pt-4 border-t-4 border-dashed text-xs font-black uppercase">
-          <span>
-            Total: <strong className="bg-[#00F5D4] text-black px-2 py-0.5 border-2 border-[#1A1A1A] ml-1">{formatRupiah(totalPendapatan)}</strong>
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 text-xs">
+          <span className="text-slate-500">
+            Total Revenue: <strong className="text-emerald-600 ml-1">{formatRupiah(totalPendapatan)}</strong>
           </span>
-          <span className="opacity-60">{laporan.length} hari</span>
+          <span className="text-slate-400">{laporan.length} days</span>
         </div>
       </div>
 
-      <div className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase tracking-wider`}>
-                <th className="p-4">Tanggal</th>
-                <th className="p-4 text-center">Transaksi</th>
-                <th className="p-4 text-right">Omzet</th>
+      {/* Table */}
+      <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tanggal</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Transaksi</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Omzet</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {laporan.map((item, index) => (
+              <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-6 py-3 text-sm font-medium">{item.tanggal}</td>
+                <td className="px-6 py-3 text-center text-sm">
+                  <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">{item.jumlah} tx</span>
+                </td>
+                <td className="px-6 py-3 text-sm font-semibold text-right">{formatRupiah(item.total)}</td>
               </tr>
-            </thead>
-            <tbody className="divide-y-2 divide-current/10 text-xs font-bold uppercase">
-              {laporan.map((item, index) => (
-                <tr key={index} className="hover:bg-black/5 transition-colors">
-                  <td className="p-4 font-black">{item.tanggal}</td>
-                  <td className="p-4 text-center">
-                    <span className={`px-3 py-1 border-2 ${b} shadow-[2px_2px_0px_0px] ${shadow}`}>{item.jumlah} tx</span>
-                  </td>
-                  <td className="p-4 text-right font-black">{formatRupiah(item.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </main>
+    </div>
   );
 }

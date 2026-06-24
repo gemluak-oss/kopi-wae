@@ -12,12 +12,10 @@ export default function ManajemenPengguna({ isDark }) {
   const currentUser = JSON.parse(localStorage.getItem("user")) || null;
   const token = localStorage.getItem("token");
 
-  const b = isDark ? "border-white" : "border-[#1A1A1A]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#EAE8E1] text-[#1A1A1A]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#1A1A1A]";
-  const mutedBg = isDark ? "bg-gray-700" : "bg-[#EAE8E1]";
-  const inputBg = isDark ? "bg-gray-700" : "bg-[#FFFDF6]";
+  const cardBg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-700" : "border-slate-200";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-500";
+  const inputBg = isDark ? "bg-slate-800 text-white" : "bg-slate-50 text-slate-800";
 
   useEffect(() => {
     fetchAllUsers();
@@ -49,7 +47,6 @@ export default function ManajemenPengguna({ isDark }) {
     setEditingUser(user);
     setShowModal(true);
   };
-
   const handleDelete = async (id, userName) => {
     if (!window.confirm(`Yakin hapus "${userName}"?`)) return;
     try {
@@ -59,7 +56,6 @@ export default function ManajemenPengguna({ isDark }) {
       alert(err.response?.data?.message || "Gagal menghapus");
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -82,135 +78,163 @@ export default function ManajemenPengguna({ isDark }) {
 
   if (isLoading)
     return (
-      <main className={`p-6 min-h-screen font-mono flex justify-center items-center ${bg}`}>
-        <div className={`px-8 py-4 border-4 ${b} ${cardBg} font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat Pengguna...</div>
-      </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading...
+        </div>
+      </div>
     );
 
   return (
-    <main className={`p-6 min-h-screen font-mono space-y-6 ${bg}`}>
-      <header className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase">Manajemen Pengguna</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Manajemen Pengguna</h1>
+          <p className={`text-sm ${mutedText} mt-1`}>Kelola akun pengguna dan admin</p>
         </div>
-        <button onClick={handleAdd} className={`px-5 py-3 border-3 ${b} bg-[#00F5D4] text-black font-black text-xs uppercase shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all`}>
-          + Tambah Pengguna
+        <button onClick={handleAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all shadow-sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Tambah Pengguna
         </button>
-      </header>
+      </div>
 
-      <section className="grid grid-cols-3 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total", value: stats.total, color: "" },
-          { label: "Admin", value: stats.admin, color: "bg-purple-300 text-black" },
-          { label: "User", value: stats.user, color: "bg-[#FFC700] text-black" },
+          { label: "Total Users", value: stats.total, borderLight: "border-slate-200", bgLight: "", borderDark: "border-slate-700", bgDark: "" },
+          { label: "Admin", value: stats.admin, borderLight: "border-purple-200", bgLight: "bg-purple-50", borderDark: "border-purple-800", bgDark: "bg-purple-950/50" },
+          { label: "Users", value: stats.user, borderLight: "border-amber-200", bgLight: "bg-amber-50", borderDark: "border-amber-800", bgDark: "bg-amber-950/50" },
         ].map((s, i) => (
-          <div key={i} className={`${s.color || cardBg} p-4 border-4 ${b} shadow-[4px_4px_0px_0px] ${shadow} text-center`}>
-            <p className="text-[10px] font-black uppercase opacity-60">{s.label}</p>
-            <p className="text-2xl font-black mt-1">{s.value}</p>
+          <div key={i} className={`${cardBg} rounded-xl border ${isDark ? `${s.borderDark} ${s.bgDark}` : `${s.borderLight} ${s.bgLight}`} p-4 text-center shadow-sm`}>
+            <p className="text-xs font-medium text-slate-500 uppercase">{s.label}</p>
+            <p className="text-2xl font-bold mt-1">{s.value}</p>
           </div>
         ))}
-      </section>
+      </div>
 
-      <div className={`${cardBg} p-4 border-4 ${b} shadow-[4px_4px_0px_0px] ${shadow}`}>
-        <div className="flex gap-2">
-          {["semua", "admin", "user"].map((r) => (
-            <button
-              key={r}
-              onClick={() => setFilterRole(r)}
-              className={`px-4 py-2 border-2 ${b} font-black text-xs uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all ${filterRole === r ? (isDark ? "bg-white text-black" : "bg-black text-white") : `${cardBg}`}`}
-            >
-              {r} ({r === "semua" ? stats.total : r === "admin" ? stats.admin : stats.user})
-            </button>
-          ))}
+      {/* Filter */}
+      <div className="flex gap-2">
+        {["semua", "admin", "user"].map((r) => (
+          <button
+            key={r}
+            onClick={() => setFilterRole(r)}
+            className={`px-4 py-2 rounded-lg text-xs font-medium capitalize transition-all ${filterRole === r ? "bg-slate-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          >
+            {r} ({r === "semua" ? stats.total : r === "admin" ? stats.admin : stats.user})
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Foto</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Nama</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">No.HP</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Role</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-44">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-12 text-center text-sm text-slate-400">
+                    Tidak ada pengguna
+                  </td>
+                </tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.id_user} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-3 text-sm text-slate-400 font-mono">#{u.id_user}</td>
+                    <td className="px-4 py-3">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                        {u.foto ? <img src={u.foto} alt="" className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-slate-500">{u.user_name.charAt(0).toUpperCase()}</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium">{u.user_name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500">{u.email}</td>
+                    <td className="px-4 py-3 text-sm">{u.no_hp || "-"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${u.role === "admin" ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-center gap-2">
+                        <button onClick={() => handleEdit(u)} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200 hover:bg-amber-100 transition-all">
+                          Edit
+                        </button>
+                        {currentUser?.id !== u.id_user && (
+                          <button onClick={() => handleDelete(u.id_user, u.user_name)} className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-medium border border-red-200 hover:bg-red-100 transition-all">
+                            Hapus
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div className={`${cardBg} p-6 border-4 ${b} shadow-[6px_6px_0px_0px] ${shadow} overflow-x-auto`}>
-        <table className="w-full text-left">
-          <thead>
-            <tr className={`${mutedBg} border-b-4 ${b} text-xs font-black uppercase`}>
-              <th className="p-4">ID</th>
-              <th className="p-4">Foto</th>
-              <th className="p-4">Nama</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">No.HP</th>
-              <th className="p-4 text-center">Role</th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y-2 divide-current/10 text-xs font-bold uppercase">
-            {users.map((u) => (
-              <tr key={u.id_user} className="hover:bg-black/5 transition-colors">
-                <td className="p-4 opacity-60">#{u.id_user}</td>
-                <td className="p-4">
-                  <div className={`w-10 h-10 border-2 ${b} ${inputBg} flex items-center justify-center overflow-hidden`}>
-                    {u.foto ? <img src={u.foto} alt="" className="w-full h-full object-cover" /> : <span className="font-black text-sm">{u.user_name.charAt(0).toUpperCase()}</span>}
-                  </div>
-                </td>
-                <td className="p-4 font-black">{u.user_name}</td>
-                <td className="p-4 opacity-80">{u.email}</td>
-                <td className="p-4">{u.no_hp || "-"}</td>
-                <td className="p-4 text-center">
-                  <span className={`px-2.5 py-1 border-2 ${b} text-[9px] font-black uppercase ${u.role === "admin" ? "bg-purple-300 text-black" : "bg-[#FFC700] text-black"}`}>{u.role}</span>
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => handleEdit(u)}
-                      className={`px-3 py-1.5 border-2 ${b} bg-[#FFC700] text-black font-black text-[10px] uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                    >
-                      Edit
-                    </button>
-                    {currentUser?.id !== u.id_user && (
-                      <button
-                        onClick={() => handleDelete(u.id_user, u.user_name)}
-                        className={`px-3 py-1.5 border-2 ${b} bg-red-400 text-black font-black text-[10px] uppercase shadow-[2px_2px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                      >
-                        Hapus
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 overflow-y-auto">
-          <div className={`${cardBg} border-4 ${b} w-full max-w-md shadow-[8px_8px_0px_0px] ${shadow}`}>
-            <div className={`p-4 border-b-4 ${b} bg-purple-300 text-black flex justify-between items-center`}>
-              <h2 className="text-sm font-black uppercase">{editingUser ? "Edit Pengguna" : "Tambah Pengguna"}</h2>
-              <button onClick={() => setShowModal(false)} className={`w-8 h-8 border-2 ${b} ${cardBg} flex items-center justify-center font-black`}>
-                &times;
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className={`${cardBg} rounded-2xl border ${border} w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold">{editingUser ? "Edit Pengguna" : "Tambah Pengguna"}</h2>
+              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {[
                 { label: "Nama", key: "user_name", type: "text", required: true },
                 { label: "Email", key: "email", type: "email", required: true },
-                { label: "Password", key: "password", type: "password", required: !editingUser },
-                { label: "Role", key: "role", type: "select", options: ["user", "admin"] },
+                { label: "Password", key: "password", type: "password", required: !editingUser, placeholder: editingUser ? "Kosongkan jika tidak diubah" : "" },
                 { label: "No.HP", key: "no_hp", type: "text" },
               ].map((f) => (
                 <div key={f.key}>
-                  <label className="block text-[11px] font-black uppercase mb-1.5">{f.label}</label>
-                  {f.type === "select" ? (
-                    <select value={formData[f.key]} onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })} className={`w-full border-2 ${b} p-2.5 text-xs font-bold uppercase ${inputBg}`}>
-                      {f.options.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input type={f.type} value={formData[f.key]} onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })} className={`w-full border-2 ${b} p-2.5 text-xs font-bold ${inputBg}`} required={f.required} />
-                  )}
+                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">{f.label}</label>
+                  <input
+                    type={f.type}
+                    value={formData[f.key]}
+                    onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                    placeholder={f.placeholder || ""}
+                    className={`w-full rounded-lg border ${border} ${inputBg} px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none`}
+                    required={f.required}
+                  />
                 </div>
               ))}
-              <div className={`border-2 border-dashed p-4 ${inputBg}`}>
-                <label className="block text-[10px] font-black uppercase mb-1">Foto Profil</label>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className={`w-full rounded-lg border ${border} ${inputBg} px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none`}
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="border border-dashed border-slate-300 rounded-lg p-4">
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Foto Profil</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -222,27 +246,15 @@ export default function ManajemenPengguna({ isDark }) {
                     const uploadRes = await axios.post("http://localhost:5000/api/upload", formImg);
                     setFormData({ ...formData, foto: uploadRes.data.url });
                   }}
-                  className="w-full text-xs font-bold"
+                  className="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 file:font-medium file:cursor-pointer"
                 />
-                {formData.foto && (
-                  <div className="pt-2 flex items-center gap-3">
-                    <img src={formData.foto} alt="" className="w-14 h-14 border-2 object-cover" />
-                    <span className="text-[9px] font-black opacity-50">Preview</span>
-                  </div>
-                )}
+                {formData.foto && <img src={formData.foto} alt="" className="w-14 h-14 rounded-lg object-cover border mt-3" />}
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className={`px-5 py-2.5 border-2 ${b} ${cardBg} font-black text-xs uppercase shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                >
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <button type="button" onClick={() => setShowModal(false)} className={`flex-1 py-2.5 rounded-lg border ${border} text-sm font-medium hover:bg-slate-50 transition-all`}>
                   Batal
                 </button>
-                <button
-                  type="submit"
-                  className={`px-5 py-2.5 border-2 ${b} bg-[#00F5D4] text-black font-black text-xs uppercase shadow-[3px_3px_0px_0px] ${shadow} hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all`}
-                >
+                <button type="submit" className="flex-1 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-all">
                   Simpan
                 </button>
               </div>
@@ -250,6 +262,6 @@ export default function ManajemenPengguna({ isDark }) {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
