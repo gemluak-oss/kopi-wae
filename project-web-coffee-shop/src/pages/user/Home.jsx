@@ -10,11 +10,14 @@ export default function Home({ isDark }) {
   const [voucherAktif, setVoucherAktif] = useState([]);
   const [copiedCode, setCopiedCode] = useState(null);
 
-  const b = isDark ? "border-white" : "border-[#121212]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#FFFDEE] text-[#121212]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#121212]";
-  const footerBg = isDark ? "bg-gray-950" : "bg-[#121212] text-white";
+  // Dynamic styles based on dark mode
+  const bg = isDark ? "bg-[#3A2F2B] text-[#E8D8C6]" : "bg-[#E8D8C6] text-[#3A2F2B]";
+  const cardBg = isDark ? "bg-[#3A2F2B]/80 border-[#C77A23]/30" : "bg-white border-[#C77A23]/20";
+  const footerBg = isDark ? "bg-[#1a1a1a] text-[#E8D8C6]" : "bg-[#3A2F2B] text-[#E8D8C6]";
+  const sectionAlt = isDark ? "bg-[#2a2522]" : "bg-white/50";
+  const testimonialBg = isDark ? "bg-[#3A2F2B]" : "bg-[#3A2F2B]";
+  const textMuted = isDark ? "text-[#E8D8C6]/50" : "text-[#3A2F2B]/50";
+  const heroBg = isDark ? "bg-[#3A2F2B]" : "bg-[#E8D8C6]";
 
   const slides = [
     { id: 1, tagline: "Experience the Gold Standard", title: "Signature Latte", desc: "Sensasi creamy dalam setiap tegukan.", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=1000" },
@@ -51,12 +54,11 @@ export default function Home({ isDark }) {
     } catch (e) {}
   };
 
-  // ✅ Fetch voucher dengan userId
   const fetchVoucherAktif = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       const userId = user?.id || "guest";
-      const res = await axios.get(`http://localhost:5000/api/user/voucher/aktif/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/user/voucher/aktif?userId=${userId}`);
       setVoucherAktif(res.data.data);
     } catch (e) {}
   };
@@ -70,301 +72,304 @@ export default function Home({ isDark }) {
   };
 
   return (
-    <div className={`min-h-screen font-mono ${bg} selection:bg-[#FFB703]`}>
-      {/* HERO */}
-      <section className={`relative min-h-screen flex flex-col md:flex-row items-center justify-center px-6 md:px-12 border-b-4 ${b} overflow-hidden`}>
-        <div className="w-full md:w-1/2 py-12 md:py-0 z-20">
-          <span className={`inline-block px-3 py-1 font-bold border-2 ${b} bg-[#FFB703] text-black uppercase text-xs mb-6 shadow-[2px_2px_0px_0px] ${shadow}`}>{slides[currentSlide].tagline}</span>
-          <h1 className="text-5xl md:text-8xl font-black mb-6 uppercase tracking-tight leading-none min-h-[160px] md:min-h-[260px]">
-            {slides[currentSlide].title.split(" ")[0]} <br />
-            <span className={`px-2 bg-[#FFB703] text-black border-2 ${b} inline-block mt-2 shadow-[4px_4px_0px_0px] ${shadow}`}>{slides[currentSlide].title.split(" ")[1]}</span>
-          </h1>
-          <p className="text-md md:text-lg max-w-md mb-8 font-medium opacity-90">{slides[currentSlide].desc}</p>
-          <button
-            onClick={() => document.getElementById("produk-section").scrollIntoView({ behavior: "smooth" })}
-            className={`px-6 py-4 font-black border-4 ${b} bg-[#FFB703] text-black uppercase shadow-[6px_6px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-1 hover:translate-y-1 transition-all`}
-          >
-            Jelajahi Menu
-          </button>
-        </div>
-        <div className="w-full md:w-1/2 p-4 md:p-12 flex justify-center">
-          <div className={`w-full max-w-md border-4 ${b} shadow-[8px_8px_0px_0px] ${shadow} bg-white overflow-hidden aspect-square`}>
-            <img src={slides[currentSlide].img} className="w-full h-full object-cover" alt="Coffee" />
-          </div>
-        </div>
-      </section>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
+        .font-serif { font-family: 'Lora', serif; }
+        .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn {
+          background: #C77A23; color: white; border-radius: 10px;
+          box-shadow: 0 6px 15px rgba(199,122,35,0.3);
+          transition: all 0.4s ease-in-out;
+        }
+        .caramel-btn:hover {
+          background: #3A2F2B; box-shadow: 0 8px 20px rgba(58,47,43,0.4);
+          transform: translateY(-2px);
+        }
+        .card-premium {
+          border-radius: 12px;
+          box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+          transition: all 0.4s ease-in-out;
+          border: 1px solid rgba(199,122,35,0.2);
+        }
+        .card-premium:hover {
+          box-shadow: 0 10px 25px rgba(199,122,35,0.25);
+          transform: translateY(-4px);
+        }
+        .linen-texture-light {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L55 30 L30 55 L5 30Z' fill='none' stroke='%23C77A23' stroke-width='0.3' opacity='0.1'/%3E%3C/svg%3E");
+        }
+        .linen-texture-dark {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L55 30 L30 55 L5 30Z' fill='none' stroke='%23C77A23' stroke-width='0.3' opacity='0.05'/%3E%3C/svg%3E");
+        }
+      `}</style>
 
-      {/* RUNNING TEXT */}
-      <div className={`py-4 border-b-4 ${b} bg-[#FFB703] text-black overflow-hidden whitespace-nowrap font-black uppercase tracking-wider text-xl flex select-none`}>
-        <div className="animate-marquee">
-          <span>AUTHENTIC LOCAL PASSION &bull;</span>
-          <span>COFFEE ROASTERY MAGELANG &bull;</span>
-          <span>EST 2024 &bull;</span>
-        </div>
-        <div className="animate-marquee" aria-hidden="true">
-          <span>AUTHENTIC LOCAL PASSION &bull;</span>
-          <span>COFFEE ROASTERY MAGELANG &bull;</span>
-          <span>EST 2024 &bull;</span>
-        </div>
-      </div>
-
-      {/* STORY */}
-      <section className={`py-24 px-6 md:px-12 border-b-4 ${b}`}>
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className={`border-4 ${b} shadow-[8px_8px_0px_0px] ${shadow} bg-stone-200 aspect-[4/5] overflow-hidden`}>
-            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=600" className="w-full h-full object-cover" alt="Barista" />
-          </div>
-          <div>
-            <span className="font-bold text-xs uppercase tracking-widest block mb-2">The Origin</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase mb-6 leading-none">Kreativitas Tanpa Batas</h2>
-            <div className={`p-6 border-4 ${b} ${cardBg} font-medium mb-8 shadow-[4px_4px_0px_0px] ${shadow}`}>"Berawal dari mimpi sederhana di sudut kota Magelang."</div>
-            <p className="mb-8 opacity-80">Kopi Wae bukan sekadar tempat nongkrong. Ini adalah rumah bagi mereka yang menghargai proses panjang sebuah racikan.</p>
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { num: "2024", label: "Tahun Berdiri" },
-                { num: "100%", label: "Biji Lokal" },
-              ].map((s, i) => (
-                <div key={i} className={`p-4 border-4 ${b} ${cardBg} shadow-[4px_4px_0px_0px] ${shadow}`}>
-                  <p className="text-3xl font-black">{s.num}</p>
-                  <p className="text-xs uppercase font-bold opacity-60">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUK TERBARU */}
-      <section id="produk-section" className={`py-24 px-6 md:px-12 border-b-4 ${b}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
-            <span className="font-bold text-xs uppercase">Katalog</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase">Produk Terbaru</h2>
-          </div>
-          {produkTerbaru.length === 0 ? (
-            <div className="flex justify-center py-20">
-              <div className={`px-6 py-3 border-4 ${b} font-bold animate-pulse ${cardBg} shadow-[4px_4px_0px_0px] ${shadow} uppercase`}>Memuat menu...</div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {produkTerbaru.map((item) => (
-                <div
-                  key={item.id_kopi}
-                  onClick={() => navigate(`/home/detail/${item.id_kopi}`)}
-                  className={`group cursor-pointer border-4 ${b} ${cardBg} shadow-[6px_6px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-1 hover:translate-y-1 transition-all`}
-                >
-                  <div className={`h-64 border-b-4 ${b} overflow-hidden bg-stone-100`}>
-                    <img src={item.gambar || "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"} alt={item.nama_kopi} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  </div>
-                  <div className="p-5">
-                    <span className="text-xs font-bold uppercase opacity-60">{item.nama_kategori}</span>
-                    <h3 className="text-xl font-black uppercase mt-1 mb-2 truncate">{item.nama_kopi}</h3>
-                    <p className={`text-lg font-bold px-2 py-1 inline-block bg-[#FFB703] text-black border-2 ${b}`}>{formatRupiah(item.harga_kopi)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="text-center mt-16">
-            <button
-              onClick={() => navigate("/home/produk")}
-              className={`px-8 py-4 border-4 ${b} ${cardBg} font-black uppercase shadow-[6px_6px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-1 hover:translate-y-1 transition-all`}
-            >
-              Lihat Semua Produk
+      <div className={`min-h-screen ${bg} font-body selection:bg-[#C77A23] selection:text-white`}>
+        {/* HERO */}
+        <section className={`relative min-h-screen flex flex-col md:flex-row items-center justify-center px-6 md:px-12 overflow-hidden ${isDark ? "linen-texture-dark" : "linen-texture-light"}`}>
+          <div className="w-full md:w-1/2 py-12 md:py-0 z-20">
+            <span className={`inline-block px-4 py-2 text-[#C77A23] font-body text-xs uppercase tracking-[0.2em] rounded-full mb-6 backdrop-blur-sm ${isDark ? "bg-[#C77A23]/10" : "bg-[#F0C98D]/30"}`}>{slides[currentSlide].tagline}</span>
+            <h1 className={`font-serif text-5xl md:text-8xl font-bold mb-6 leading-none ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>
+              {slides[currentSlide].title.split(" ")[0]} <br />
+              <span className="text-[#C77A23] italic">{slides[currentSlide].title.split(" ")[1]}</span>
+            </h1>
+            <p className={`text-lg max-w-md mb-8 font-body font-light ${isDark ? "text-[#E8D8C6]/70" : "text-[#3A2F2B]/70"}`}>{slides[currentSlide].desc}</p>
+            <button onClick={() => document.getElementById("produk-section").scrollIntoView({ behavior: "smooth" })} className="caramel-btn px-8 py-4 font-body text-sm uppercase tracking-[0.15em]">
+              Jelajahi Menu
             </button>
           </div>
-        </div>
-      </section>
+          <div className="w-full md:w-1/2 p-4 md:p-12 flex justify-center">
+            <div className={`w-full max-w-md rounded-2xl shadow-2xl shadow-[#C77A23]/20 overflow-hidden border-4 ${isDark ? "border-[#C77A23]/30" : "border-white"}`}>
+              <img src={slides[currentSlide].img} className="w-full h-full object-cover" alt="Coffee" />
+            </div>
+          </div>
+        </section>
 
-      {/* FEATURES */}
-      <section className={`py-24 px-6 md:px-12 border-b-4 ${b}`}>
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-black uppercase mb-16">Lebih Dari Sekadar Kopi</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((f) => (
-              <div key={f.id} className={`p-8 border-4 ${b} ${cardBg} shadow-[6px_6px_0px_0px] ${shadow}`}>
-                <div className={`w-12 h-12 flex items-center justify-center border-2 ${b} bg-[#FFB703] text-black font-black text-sm mb-6`}>{f.code}</div>
-                <h3 className="text-2xl font-black uppercase mb-3">{f.title}</h3>
-                <p className="text-sm font-medium opacity-80">{f.desc}</p>
-              </div>
-            ))}
+        {/* RUNNING TEXT */}
+        <div className={`py-4 border-y border-[#C77A23]/20 font-body font-medium uppercase tracking-wider text-lg flex select-none overflow-hidden whitespace-nowrap ${isDark ? "bg-[#C77A23] text-white" : "bg-[#3A2F2B] text-[#E8D8C6]"}`}>
+          <div className="animate-marquee">
+            <span>AUTHENTIC LOCAL PASSION &bull;</span>
+            <span>COFFEE ROASTERY MAGELANG &bull;</span>
+            <span>EST 2024 &bull;</span>
+          </div>
+          <div className="animate-marquee" aria-hidden="true">
+            <span>AUTHENTIC LOCAL PASSION &bull;</span>
+            <span>COFFEE ROASTERY MAGELANG &bull;</span>
+            <span>EST 2024 &bull;</span>
           </div>
         </div>
-      </section>
 
-      {/* TESTIMONIALS */}
-      <section className={`py-24 px-6 md:px-12 border-b-4 ${b}`}>
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-black uppercase mb-16">Kata Mereka</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t) => (
-              <div key={t.id} className={`p-8 border-4 ${b} ${cardBg} shadow-[6px_6px_0px_0px] ${shadow} flex flex-col justify-between`}>
-                <p className="font-medium text-md mb-8">"{t.text}"</p>
-                <div className="flex items-center space-x-4 pt-4 border-t-2 border-dashed">
-                  <img src={t.img} className={`w-12 h-12 border-2 ${b}`} alt={t.name} />
-                  <div>
-                    <p className="font-black text-sm uppercase">{t.name}</p>
-                    <p className="text-xs font-bold uppercase opacity-50">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === FOOTER === */}
-      <footer className={`pt-16 pb-8 px-6 md:px-12 ${footerBg}`}>
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 pb-12 border-b-4 border-dashed border-gray-600">
-          <div className="md:col-span-5 flex flex-col justify-between">
+        {/* STORY */}
+        <section className="py-24 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className={`rounded-2xl overflow-hidden shadow-xl shadow-[#C77A23]/15 border-4 ${isDark ? "border-[#C77A23]/30" : "border-white"}`}>
+              <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=600" className="w-full h-full object-cover" alt="Barista" />
+            </div>
             <div>
-              <div className="inline-flex items-center gap-3 bg-[#FFB703] text-black border-3 border-black px-4 py-2 shadow-[4px_4px_0px_0px_#fff] mb-6">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2,21V19H20V21H2M20,8V5H18V8H20M20,3A2,2 0 0,1 22,5V8A2,2 0 0,1 20,10H18V13A4,4 0 0,1 14,17H8A4,4 0 0,1 4,13V3H20M16,5H6V13A2,2 0 0,0 8,15H14A2,2 0 0,0 16,13V5Z" />
-                </svg>
-                <h2 className="text-lg font-black uppercase tracking-wider">Kopi Wae</h2>
+              <span className="font-body text-xs uppercase tracking-[0.2em] text-[#C77A23] block mb-2 font-medium">The Origin</span>
+              <h2 className={`font-serif text-4xl md:text-6xl font-bold mb-6 leading-none ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Kreativitas Tanpa Batas</h2>
+              <div className={`card-premium p-6 mb-8 ${isDark ? "bg-[#2a2522]" : "bg-white"}`}>
+                <p className={`font-serif italic ${isDark ? "text-[#E8D8C6]/70" : "text-[#3A2F2B]/70"}`}>"Berawal dari mimpi sederhana di sudut kota Magelang."</p>
               </div>
-              <p className="text-sm max-w-sm font-medium opacity-80 leading-relaxed mb-6">Menyajikan racikan kopi murni berkualitas tinggi langsung dari petani lokal Magelang untuk melengkapi hari produktifmu.</p>
+              <p className={`mb-8 font-body leading-relaxed ${isDark ? "text-[#E8D8C6]/70" : "text-[#3A2F2B]/70"}`}>Kopi Wae bukan sekadar tempat nongkrong. Ini adalah rumah bagi mereka yang menghargai proses panjang sebuah racikan.</p>
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  { num: "2024", label: "Tahun Berdiri" },
+                  { num: "100%", label: "Biji Lokal" },
+                ].map((s, i) => (
+                  <div key={i} className={`card-premium p-4 text-center ${isDark ? "bg-[#2a2522]" : "bg-white"}`}>
+                    <p className="font-serif text-3xl font-bold text-[#C77A23]">{s.num}</p>
+                    <p className={`text-xs font-body uppercase tracking-wider ${textMuted}`}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-3">
-              {["IG", "FB", "TW", "YT"].map((soc, i) => (
-                <a key={i} href="#" className="w-10 h-10 border-2 border-white bg-gray-800 text-white flex items-center justify-center font-black text-xs uppercase hover:bg-[#FFB703] hover:text-black hover:border-black transition-colors">
-                  {soc}
-                </a>
+          </div>
+        </section>
+
+        {/* PRODUK TERBARU */}
+        <section id="produk-section" className={`py-24 px-6 md:px-12 ${sectionAlt}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-16 text-center">
+              <span className="font-body text-xs uppercase tracking-[0.2em] text-[#C77A23] font-medium">Katalog</span>
+              <h2 className={`font-serif text-4xl md:text-6xl font-bold mt-2 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Produk Terbaru</h2>
+            </div>
+            {produkTerbaru.length === 0 ? (
+              <div className="flex justify-center py-20">
+                <div className={`px-8 py-4 rounded-full animate-pulse uppercase tracking-wider text-sm font-body ${isDark ? "bg-[#C77A23]/20 text-[#C77A23]" : "bg-[#C77A23]/10 text-[#C77A23]"}`}>Memuat menu...</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {produkTerbaru.map((item) => (
+                  <div key={item.id_kopi} onClick={() => navigate(`/home/detail/${item.id_kopi}`)} className={`card-premium cursor-pointer overflow-hidden ${isDark ? "bg-[#2a2522]" : "bg-white"}`}>
+                    <div className="h-56 overflow-hidden">
+                      <img src={item.gambar || "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"} alt={item.nama_kopi} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                    </div>
+                    <div className="p-5">
+                      <span className="text-xs text-[#C77A23] font-body uppercase tracking-wider">{item.nama_kategori}</span>
+                      <h3 className={`font-serif text-xl font-bold mt-1 mb-2 truncate ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{item.nama_kopi}</h3>
+                      <p className="text-lg font-bold text-[#C77A23]">{formatRupiah(item.harga_kopi)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="text-center mt-16">
+              <button onClick={() => navigate("/home/produk")} className="caramel-btn px-10 py-4 font-body text-sm uppercase tracking-[0.15em]">
+                Lihat Semua Produk
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES */}
+        <section className="py-24 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto text-center">
+            <h2 className={`font-serif text-4xl md:text-6xl font-bold mb-16 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Lebih Dari Sekadar Kopi</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {features.map((f) => (
+                <div key={f.id} className={`card-premium p-8 text-center ${isDark ? "bg-[#2a2522]" : "bg-white"}`}>
+                  <div className="w-16 h-16 mx-auto mb-6 bg-[#C77A23]/10 rounded-full flex items-center justify-center">
+                    <span className="font-serif text-xl font-bold text-[#C77A23]">{f.code}</span>
+                  </div>
+                  <h3 className={`font-serif text-2xl font-bold mb-3 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{f.title}</h3>
+                  <p className={`text-sm font-body leading-relaxed ${textMuted}`}>{f.desc}</p>
+                </div>
               ))}
             </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[#FFB703] mb-6">[ Navigasi ]</h3>
-            <ul className="space-y-3 text-sm font-bold uppercase">
-              <li>
-                <button onClick={() => navigate("/home")} className="hover:text-[#FFB703] hover:underline transition-all">
-                  Beranda
-                </button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/home/produk")} className="hover:text-[#FFB703] hover:underline transition-all">
-                  Semua Produk
-                </button>
-              </li>
-              {!localStorage.getItem("token") ? (
-                <>
-                  <li>
-                    <button onClick={() => navigate("/login")} className="hover:text-[#FFB703] hover:underline transition-all">
-                      Masuk Akun
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => navigate("/register")} className="hover:text-[#FFB703] hover:underline transition-all">
-                      Daftar Baru
-                    </button>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    <button onClick={() => navigate("/home/profil")} className="hover:text-[#FFB703] hover:underline transition-all">
-                      Profil Saya
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => navigate("/home/history")} className="hover:text-[#FFB703] hover:underline transition-all">
-                      Riwayat Pesanan
-                    </button>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-          <div className="md:col-span-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[#FFB703] mb-6">[ Jam Operasional & Alamat ]</h3>
-            <div className="space-y-4 text-sm font-medium opacity-90">
-              <p>
-                <span className="block font-black text-xs uppercase text-gray-400">Setiap Hari:</span>09:00 AM - 11:00 PM WIB
-              </p>
-              <p>
-                <span className="block font-black text-xs uppercase text-gray-400">Lokasi Roastery:</span>Jl. Pemuda No. 42, Kompleks Alun-Alun, Magelang, Jawa Tengah.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold uppercase opacity-60 tracking-wide">
-          <p>&copy; 2026 Kopi Wae. All Rights Reserved.</p>
-          <p>Built with Passion &amp; Neo-Brutalism Style</p>
-        </div>
-      </footer>
+        </section>
 
-      {/* ========== POPUP VOUCHER ========== */}
-      {showPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`max-w-md w-full border-4 ${b} ${cardBg} p-0 relative shadow-[12px_12px_0px_0px] ${shadow}`}>
-            <button onClick={() => setShowPopup(false)} className={`absolute top-3 right-3 w-8 h-8 flex items-center justify-center font-black text-sm border-2 ${b} hover:bg-red-400 hover:text-black transition-all z-10`}>
-              X
-            </button>
-
-            <div className={`p-6 border-b-4 ${b} bg-[#FFB703] text-black`}>
-              <h2 className="text-xl font-black uppercase tracking-tight">Kupon Spesial</h2>
-              <p className="text-[10px] font-bold uppercase opacity-70 mt-1">Klaim sebelum kehabisan</p>
-            </div>
-
-            <div className="p-6 max-h-[400px] overflow-y-auto">
-              {voucherAktif.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className={`w-16 h-16 mx-auto mb-4 border-4 ${b} rounded-full flex items-center justify-center`}>
-                    <span className="text-2xl font-black opacity-30">!</span>
+        {/* TESTIMONIALS */}
+        <section className={`py-24 px-6 md:px-12 ${testimonialBg}`}>
+          <div className="max-w-7xl mx-auto text-center">
+            <h2 className="font-serif text-4xl md:text-6xl font-bold text-[#E8D8C6] mb-16">Kata Mereka</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.map((t) => (
+                <div key={t.id} className={`p-8 rounded-xl text-left border border-[#C77A23]/20 ${isDark ? "bg-white/5" : "bg-white/5"}`}>
+                  <p className="text-[#E8D8C6]/80 font-body mb-8 leading-relaxed">"{t.text}"</p>
+                  <div className="flex items-center gap-4 pt-4 border-t border-[#C77A23]/20">
+                    <img src={t.img} className="w-12 h-12 rounded-full border-2 border-[#C77A23]" alt={t.name} />
+                    <div>
+                      <p className="text-[#E8D8C6] font-body text-sm font-medium uppercase">{t.name}</p>
+                      <p className="text-[#C77A23] font-body text-xs uppercase">{t.role}</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-black uppercase">Belum ada voucher</p>
-                  <p className="text-[10px] font-bold uppercase opacity-60 mt-1">Cek lagi nanti</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {voucherAktif.map((v, i) => {
-                    const habis = v.kuota_habis === 1;
+              ))}
+            </div>
+          </div>
+        </section>
 
+        {/* FOOTER */}
+        <footer className={`pt-16 pb-8 px-6 md:px-12 ${footerBg}`}>
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 pb-12 border-b border-[#C77A23]/30">
+            <div className="md:col-span-5">
+              <h2 className="font-serif text-3xl font-bold italic mb-4">Kopi Wae</h2>
+              <p className="text-sm opacity-80 font-body leading-relaxed mb-6">Menyajikan racikan kopi murni berkualitas tinggi langsung dari petani lokal Magelang.</p>
+              <div className="flex gap-3">
+                {["IG", "FB", "TW", "YT"].map((soc, i) => (
+                  <a key={i} href="#" className="w-10 h-10 border border-[#C77A23]/30 rounded-full flex items-center justify-center font-body text-xs uppercase hover:bg-[#C77A23] hover:text-white transition-all">
+                    {soc}
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-body text-xs uppercase tracking-[0.2em] text-[#C77A23] mb-6 font-medium">Navigasi</h3>
+              <ul className="space-y-3 text-sm font-body">
+                <li>
+                  <button onClick={() => navigate("/home")} className="hover:text-[#C77A23] transition-all">
+                    Beranda
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate("/home/produk")} className="hover:text-[#C77A23] transition-all">
+                    Semua Produk
+                  </button>
+                </li>
+                {!localStorage.getItem("token") ? (
+                  <>
+                    <li>
+                      <button onClick={() => navigate("/login")} className="hover:text-[#C77A23] transition-all">
+                        Masuk Akun
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => navigate("/register")} className="hover:text-[#C77A23] transition-all">
+                        Daftar Baru
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <button onClick={() => navigate("/home/profil")} className="hover:text-[#C77A23] transition-all">
+                        Profil Saya
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => navigate("/home/history")} className="hover:text-[#C77A23] transition-all">
+                        Riwayat Pesanan
+                      </button>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+            <div className="md:col-span-4">
+              <h3 className="font-body text-xs uppercase tracking-[0.2em] text-[#C77A23] mb-6 font-medium">Jam Operasional & Alamat</h3>
+              <div className="space-y-4 text-sm font-body opacity-80">
+                <p>
+                  <span className="block text-xs text-[#C77A23] uppercase">Setiap Hari:</span>09:00 AM - 11:00 PM WIB
+                </p>
+                <p>
+                  <span className="block text-xs text-[#C77A23] uppercase">Lokasi Roastery:</span>Jl. Pemuda No. 42, Magelang, Jawa Tengah.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs opacity-60 font-body uppercase tracking-wider">
+            <p>&copy; 2026 Kopi Wae. All Rights Reserved.</p>
+            <p>Built with Passion</p>
+          </div>
+        </footer>
+
+        {/* POPUP VOUCHER */}
+        {showPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className={`rounded-2xl max-w-md w-full p-8 shadow-2xl border border-[#C77A23]/20 ${isDark ? "bg-[#2a2522] text-[#E8D8C6]" : "bg-white text-[#3A2F2B]"}`}>
+              <button onClick={() => setShowPopup(false)} className={`absolute top-4 right-4 font-body text-sm transition-all ${isDark ? "text-[#E8D8C6]/50 hover:text-[#C77A23]" : "text-[#3A2F2B]/50 hover:text-[#C77A23]"}`}>
+                X
+              </button>
+              <h2 className={`font-serif text-2xl font-bold mb-6 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Kupon Spesial</h2>
+              <div className="space-y-4 mb-6">
+                {voucherAktif.length === 0 ? (
+                  <p className={`text-center text-sm font-body py-8 ${textMuted}`}>Belum ada voucher tersedia</p>
+                ) : (
+                  voucherAktif.map((v, i) => {
+                    const habis = v.kuota_habis === 1;
                     return (
-                      <div key={i} className={`border-4 ${b} p-5 shadow-[4px_4px_0px_0px] ${shadow} ${habis ? "opacity-50" : ""}`}>
+                      <div key={i} className={`card-premium p-5 ${habis ? "opacity-50" : ""} ${isDark ? "bg-[#3A2F2B]" : "bg-white"}`}>
                         <div className="flex items-center justify-between mb-3">
-                          <span className={`inline-block px-3 py-1 border-2 ${b} ${habis ? "bg-gray-300" : "bg-[#00F5D4]"} text-black font-black text-lg tracking-wider`}>{v.kode}</span>
-                          <span className="text-2xl font-black">{v.diskon_persen}% OFF</span>
+                          <span className={`font-serif text-xl font-bold text-[#C77A23]`}>{v.kode}</span>
+                          <span className={`font-body text-lg font-bold ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{v.diskon_persen}% OFF</span>
                         </div>
-                        <div className="border-t-2 border-dashed opacity-30 my-3"></div>
-                        <div className="space-y-2 text-xs font-bold uppercase mb-4">
+                        <div className="border-t border-dashed border-[#C77A23]/20 my-3" />
+                        <div className="space-y-2 text-xs font-body uppercase mb-4">
                           <p className="flex justify-between">
-                            <span className="opacity-60">Max Potongan</span>
-                            <span className="font-black">Rp {Number(v.max_diskon || 0).toLocaleString("id-ID")}</span>
+                            <span className={textMuted}>Max Potongan</span>
+                            <span className="font-medium">Rp {Number(v.max_diskon || 0).toLocaleString("id-ID")}</span>
                           </p>
                           <p className="flex justify-between">
-                            <span className="opacity-60">Min Pembelian</span>
-                            <span className="font-black">Rp {Number(v.min_belanja || 0).toLocaleString("id-ID")}</span>
+                            <span className={textMuted}>Min Pembelian</span>
+                            <span className="font-medium">Rp {Number(v.min_belanja || 0).toLocaleString("id-ID")}</span>
                           </p>
                         </div>
                         {habis ? (
-                          <div className="w-full py-2.5 text-xs font-black border-2 border-gray-400 bg-gray-200 text-gray-500 uppercase text-center">
+                          <div className={`w-full py-2.5 text-center rounded-lg font-body text-xs uppercase ${isDark ? "bg-gray-700 text-gray-400" : "bg-gray-100 text-gray-400"}`}>
                             Sudah Dipakai ({v.sudah_dipakai}/{v.max_usage_per_user})
                           </div>
                         ) : (
-                          <button
-                            onClick={() => handleCopy(v.kode)}
-                            className={`w-full py-2.5 text-xs font-black border-2 ${b} uppercase transition-all ${copiedCode === v.kode ? "bg-green-400 text-black" : "bg-[#FFB703] text-black hover:bg-black hover:text-white"}`}
-                          >
+                          <button onClick={() => handleCopy(v.kode)} className={`w-full py-2.5 rounded-lg font-body text-xs uppercase tracking-wider transition-all ${copiedCode === v.kode ? "bg-green-500 text-white" : "caramel-btn"}`}>
                             {copiedCode === v.kode ? "Tersalin" : "Salin Kode"}
                           </button>
                         )}
                       </div>
                     );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className={`p-4 border-t-4 ${b}`}>
-              <button onClick={() => setShowPopup(false)} className={`w-full py-3 font-black border-4 ${b} bg-black text-white uppercase hover:bg-[#FFB703] hover:text-black transition-all text-sm`}>
+                  })
+                )}
+              </div>
+              <button
+                onClick={() => setShowPopup(false)}
+                className={`w-full py-3 rounded-lg font-body text-sm uppercase tracking-wider transition-all ${isDark ? "bg-[#E8D8C6] text-[#3A2F2B] hover:bg-[#C77A23] hover:text-white" : "bg-[#3A2F2B] text-white hover:bg-[#C77A23]"}`}
+              >
                 Tutup
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }

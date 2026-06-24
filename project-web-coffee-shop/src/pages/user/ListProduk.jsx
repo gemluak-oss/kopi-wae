@@ -10,11 +10,11 @@ export default function ListProduk({ isDark }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
-  const b = isDark ? "border-white" : "border-[#121212]";
-  const bg = isDark ? "bg-gray-900 text-white" : "bg-[#FFFDEE] text-[#121212]";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const shadow = isDark ? "shadow-white" : "shadow-[#121212]";
-  const btnOff = isDark ? "bg-gray-700 text-white" : "bg-[#E0E0E0] text-[#121212]";
+
+  // Dynamic Caramelo Quente styles
+  const bg = isDark ? "bg-[#3A2F2B] text-[#E8D8C6]" : "bg-[#E8D8C6] text-[#3A2F2B]";
+  const cardBg = isDark ? "bg-[#2a2522]" : "bg-white";
+  const textMuted = isDark ? "text-[#E8D8C6]/50" : "text-[#3A2F2B]/50";
 
   useEffect(() => {
     fetchKategori();
@@ -53,101 +53,139 @@ export default function ListProduk({ isDark }) {
   };
 
   return (
-    <section className={`min-h-screen py-24 ${bg} font-mono`}>
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
-          <div className="max-w-md w-full">
-            <span className="font-bold text-xs uppercase tracking-widest block mb-2">Selection</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight uppercase mb-6 leading-none">
-              MENU <span className={`px-2 bg-[#FFB703] text-black border-2 ${b} shadow-[3px_3px_0px_0px] ${shadow}`}>KAMI</span>
-            </h2>
-            <div className={`flex shadow-[4px_4px_0px_0px] ${shadow} ${cardBg} border-4 ${b}`}>
-              <input
-                type="text"
-                placeholder="Cari kopi favorit..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full bg-transparent px-4 py-3 outline-none text-sm font-bold placeholder-stone-400"
-              />
-              <button onClick={handleSearch} className={`border-l-4 ${b} bg-[#FFB703] text-black font-black px-6 text-xs uppercase hover:bg-black hover:text-white transition-colors`}>
-                Cari
-              </button>
-            </div>
-          </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
+        .font-serif { font-family: 'Lora', serif; }
+        .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn {
+          background: #C77A23; color: white; border-radius: 10px;
+          transition: all 0.3s ease; font-family: 'Roboto', sans-serif;
+          font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .caramel-btn:hover { background: #3A2F2B; }
+        .card-product {
+          border-radius: 16px; border: 1px solid rgba(199,122,35,0.25);
+          transition: all 0.4s ease-in-out; overflow: hidden;
+          box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+        .card-product:hover {
+          box-shadow: 0 12px 28px rgba(199,122,35,0.2);
+          transform: translateY(-6px);
+        }
+        .filter-btn {
+          border-radius: 10px; font-family: 'Roboto', sans-serif;
+          font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+          letter-spacing: 0.05em; padding: 0.75rem 1.5rem;
+          transition: all 0.3s ease; border: 1px solid rgba(199,122,35,0.3);
+        }
+        .filter-btn.active {
+          background: #C77A23; color: white; border-color: #C77A23;
+          box-shadow: 0 4px 12px rgba(199,122,35,0.3);
+        }
+        .filter-btn:not(.active):hover {
+          background: rgba(199,122,35,0.1); border-color: #C77A23;
+        }
+        .search-input {
+          border-radius: 10px; font-family: 'Roboto', sans-serif;
+          border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease;
+        }
+        .search-input:focus {
+          border-color: #C77A23; box-shadow: 0 0 0 3px rgba(199,122,35,0.1);
+          outline: none;
+        }
+      `}</style>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setActiveCategory("semua")}
-              className={`px-6 py-3 border-4 ${b} font-black text-xs uppercase tracking-wider transition-all ${activeCategory === "semua" ? "bg-[#00F5D4] text-black translate-x-1 translate-y-1 shadow-none" : `${btnOff} shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-0.5 hover:translate-y-0.5`}`}
-            >
-              Semua
-            </button>
-            {kategori.map((kat) => (
-              <button
-                key={kat.id_kategori}
-                onClick={() => setActiveCategory(kat.id_kategori)}
-                className={`px-6 py-3 border-4 ${b} font-black text-xs uppercase tracking-wider transition-all ${activeCategory === kat.id_kategori ? "bg-[#00F5D4] text-black translate-x-1 translate-y-1 shadow-none" : `${btnOff} shadow-[4px_4px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-0.5 hover:translate-y-0.5`}`}
-              >
-                {kat.nama_kategori}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {isLoading ? (
-            <div className="col-span-full py-24 text-center">
-              <div className={`px-6 py-3 border-4 ${b} ${cardBg} font-bold inline-block animate-pulse uppercase shadow-[4px_4px_0px_0px] ${shadow}`}>Memuat menu...</div>
-            </div>
-          ) : products.length > 0 ? (
-            products.map((p) => (
-              <div
-                key={p.id_kopi}
-                onClick={() => handleDetailClick(p)}
-                className={`group cursor-pointer border-4 ${b} ${cardBg} p-6 shadow-[6px_6px_0px_0px] ${shadow} hover:shadow-[2px_2px_0px_0px] hover:translate-x-1 hover:translate-y-1 transition-all`}
-              >
-                <div className={`relative h-64 border-4 ${b} overflow-hidden mb-6 bg-stone-100`}>
-                  {p.stok <= 0 && (
-                    <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center">
-                      <span className="text-black bg-red-400 border-2 border-[#121212] font-black uppercase px-4 py-1.5 text-xs">Habis</span>
-                    </div>
-                  )}
-                  <img
-                    src={p.gambar || "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"}
-                    className={`h-full w-full object-cover group-hover:scale-105 transition-transform ${p.stok <= 0 ? "grayscale" : ""}`}
-                    alt={p.nama_kopi}
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-[#FFB703] text-black text-[10px] font-black px-2.5 py-1 border-2 border-[#121212] uppercase">{p.nama_kategori}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div className="max-w-[70%]">
-                    <h4 className="text-xl font-black mb-2 uppercase truncate">{p.nama_kopi}</h4>
-                    <p className={`text-md font-bold px-2 py-0.5 inline-block bg-[#FFB703] text-black border-2 ${b} mb-2`}>{formatRupiah(p.harga_kopi)}</p>
-                    <p className="text-2xs font-black uppercase opacity-50">Stok: {p.stok}</p>
-                  </div>
-                  <button
-                    disabled={p.stok <= 0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDetailClick(p);
-                    }}
-                    className={`h-12 w-12 border-3 ${b} bg-[#121212] text-white text-xl font-black flex items-center justify-center hover:bg-[#FFB703] hover:text-black disabled:opacity-30`}
-                  >
-                    +
-                  </button>
-                </div>
+      <section className={`min-h-screen py-24 font-body ${bg}`}>
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
+            <div className="max-w-md w-full">
+              <span className="text-xs uppercase tracking-[0.2em] text-[#C77A23] block mb-2 font-medium">Selection</span>
+              <h2 className={`font-serif text-4xl md:text-6xl font-bold mb-6 leading-none ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>
+                MENU <span className="text-[#C77A23] italic">KAMI</span>
+              </h2>
+              <div className="flex search-input overflow-hidden">
+                <input
+                  type="text"
+                  placeholder="Cari kopi favorit..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  className={`w-full bg-transparent px-4 py-3 text-sm font-medium placeholder-current/30 outline-none ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}
+                />
+                <button onClick={handleSearch} className="caramel-btn px-6 text-xs rounded-l-none">
+                  Cari
+                </button>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full py-24 text-center">
-              <div className={`px-6 py-4 border-4 border-dashed font-black uppercase tracking-widest opacity-40 inline-block ${cardBg}`}>Menu tidak ditemukan</div>
             </div>
-          )}
+
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => setActiveCategory("semua")} className={`filter-btn ${activeCategory === "semua" ? "active" : isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>
+                Semua
+              </button>
+              {kategori.map((kat) => (
+                <button key={kat.id_kategori} onClick={() => setActiveCategory(kat.id_kategori)} className={`filter-btn ${activeCategory === kat.id_kategori ? "active" : isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>
+                  {kat.nama_kategori}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {isLoading ? (
+              <div className="col-span-full py-24 text-center">
+                <div className={`inline-block px-8 py-4 rounded-full animate-pulse uppercase tracking-wider text-sm font-body ${isDark ? "bg-[#C77A23]/20 text-[#C77A23]" : "bg-[#C77A23]/10 text-[#C77A23]"}`}>Memuat menu...</div>
+              </div>
+            ) : products.length > 0 ? (
+              products.map((p) => (
+                <div key={p.id_kopi} onClick={() => handleDetailClick(p)} className={`card-product cursor-pointer ${cardBg}`}>
+                  <div className="relative h-64 overflow-hidden">
+                    {p.stok <= 0 && (
+                      <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center">
+                        <span className="text-white bg-red-500/80 rounded-full font-body font-medium px-4 py-1.5 text-xs uppercase tracking-wider">Habis</span>
+                      </div>
+                    )}
+                    <img
+                      src={p.gambar || "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"}
+                      className={`h-full w-full object-cover hover:scale-105 transition-transform duration-500 ${p.stok <= 0 ? "grayscale" : ""}`}
+                      alt={p.nama_kopi}
+                    />
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-[#C77A23] text-white text-[10px] font-body font-medium px-3 py-1 rounded-full uppercase tracking-wider">{p.nama_kategori}</span>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex justify-between items-end">
+                      <div className="max-w-[70%]">
+                        <h4 className={`font-serif text-xl font-bold mb-1 truncate ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{p.nama_kopi}</h4>
+                        <p className="text-lg font-bold text-[#C77A23] font-body mb-1">{formatRupiah(p.harga_kopi)}</p>
+                        <p className={`text-xs font-body uppercase tracking-wider ${textMuted}`}>Stok: {p.stok}</p>
+                      </div>
+                      <button
+                        disabled={p.stok <= 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDetailClick(p);
+                        }}
+                        className="w-10 h-10 rounded-full bg-[#C77A23] text-white font-body text-lg flex items-center justify-center hover:bg-[#3A2F2B] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-24 text-center">
+                <div className={`inline-block px-6 py-4 rounded-xl border border-dashed border-[#C77A23]/30 font-body text-sm uppercase tracking-wider ${textMuted}`}>Menu tidak ditemukan</div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
