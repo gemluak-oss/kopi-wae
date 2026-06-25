@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../hooks/useRealtime";
 
 function AdminLayout({ onLogout, isDark, setIsDark }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -10,14 +11,11 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // Financial Dashboard Theme
   const bg = isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800";
   const cardBg = isDark ? "bg-slate-900" : "bg-white";
   const border = isDark ? "border-slate-700" : "border-slate-200";
   const sidebarBg = isDark ? "bg-slate-950 border-r border-slate-800" : "bg-[#003366]";
   const sidebarText = "text-white";
-  const accent = "bg-emerald-500";
-  const accentHover = "hover:bg-emerald-600";
   const mutedText = isDark ? "text-slate-400" : "text-slate-500";
 
   const isActive = (path) => {
@@ -31,6 +29,8 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
     try {
       const res = await axios.get(`http://localhost:5000/api/user/profil/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
       setAdminData(res.data.data);
+      localStorage.setItem("user", JSON.stringify({ ...user, name: res.data.data.user_name, email: res.data.data.email, foto: res.data.data.foto }));
+      window.dispatchEvent(new Event("storage"));
     } catch (err) {
       setAdminData({ user_name: user.name || "Admin", email: user.email || "", foto: user.foto || null });
     }
@@ -38,9 +38,10 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
 
   useEffect(() => {
     loadAdmin();
-    window.addEventListener("adminUpdated", loadAdmin);
-    return () => window.removeEventListener("adminUpdated", loadAdmin);
   }, []);
+
+  useRealtime("profilUpdate", () => loadAdmin());
+  useRealtime("userUpdate", () => loadAdmin());
 
   const menuItems = [
     { path: "/admin", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -76,19 +77,12 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         .font-sans { font-family: 'Inter', sans-serif; }
-        .trend-up { color: #22C55E; }
-        .trend-down { color: #EF4444; }
-        .metric-card { transition: all 0.2s ease; }
-        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .count-up { font-variant-numeric: tabular-nums; }
       `}</style>
 
       <div className={`flex h-screen ${bg} font-sans`}>
         {isSidebarOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
 
-        {/* SIDEBAR */}
         <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:relative lg:translate-x-0 flex flex-col ${sidebarBg} ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          {/* Logo */}
           <div className="flex items-center gap-3 px-6 h-16 border-b border-white/10">
             <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-white text-sm shadow-lg shadow-emerald-500/30">KW</div>
             <div className={sidebarText}>
@@ -97,13 +91,10 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
             </div>
           </div>
 
-          {/* Menu */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {menuItems.map((item) => {
               const active = isActive(item.path);
-              const linkClass = `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                active ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : `${sidebarText}/70 hover:bg-white/10 hover:${sidebarText}`
-              }`;
+              const linkClass = `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${active ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : `${sidebarText}/70 hover:bg-white/10 hover:${sidebarText}`}`;
 
               if (item.isExternal) {
                 return (
@@ -115,7 +106,6 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
                   </a>
                 );
               }
-
               return (
                 <Link key={item.path} to={item.path} onClick={() => setIsSidebarOpen(false)} className={linkClass}>
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +117,6 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
             })}
           </nav>
 
-          {/* User & Logout */}
           <div className="p-4 border-t border-white/10">
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/5 mb-3">
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center overflow-hidden flex-shrink-0 text-white font-semibold text-xs">
@@ -144,9 +133,7 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
           </div>
         </aside>
 
-        {/* MAIN */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
           <header className={`flex items-center justify-between px-6 h-16 border-b ${border} ${cardBg}`}>
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 rounded-lg ${border} ${cardBg} lg:hidden hover:bg-slate-100`}>
@@ -176,13 +163,11 @@ function AdminLayout({ onLogout, isDark, setIsDark }) {
             </div>
           </header>
 
-          {/* Content */}
           <main className={`flex-1 overflow-y-auto p-6 ${isDark ? "bg-slate-950" : "bg-slate-50"}`}>
             <Outlet />
           </main>
         </div>
 
-        {/* Logout Modal */}
         {showLogoutModal && (
           <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
             <div className={`${cardBg} rounded-2xl border ${border} p-8 max-w-sm w-full text-center shadow-2xl`}>

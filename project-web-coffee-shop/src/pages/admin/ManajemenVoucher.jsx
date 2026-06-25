@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
 
 export default function ManajemenVoucher({ isDark }) {
   const [voucher, setVoucher] = useState([]);
@@ -15,6 +16,9 @@ export default function ManajemenVoucher({ isDark }) {
   useEffect(() => {
     fetchVoucher();
   }, []);
+
+  // ✅ SSE: Auto refresh
+  useRealtime("voucherUpdate", () => fetchVoucher());
 
   const fetchVoucher = async () => {
     try {
@@ -43,7 +47,7 @@ export default function ManajemenVoucher({ isDark }) {
       }
       setShowModal(false);
       setEditingId(null);
-      fetchVoucher();
+      // Ga perlu fetchVoucher() karena SSE
     } catch (err) {
       alert("Gagal menyimpan voucher");
     }
@@ -54,7 +58,7 @@ export default function ManajemenVoucher({ isDark }) {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:5000/api/admin/voucher/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      fetchVoucher();
+      // Ga perlu fetchVoucher() karena SSE
     } catch (err) {
       alert("Gagal menghapus voucher");
     }
@@ -67,7 +71,6 @@ export default function ManajemenVoucher({ isDark }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manajemen Voucher</h1>
@@ -91,7 +94,6 @@ export default function ManajemenVoucher({ isDark }) {
         </div>
       </div>
 
-      {/* Table */}
       <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -151,7 +153,6 @@ export default function ManajemenVoucher({ isDark }) {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className={`${cardBg} rounded-2xl border ${border} w-full max-w-md shadow-2xl`}>

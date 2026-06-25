@@ -35,7 +35,37 @@ app.post("/api/upload", upload.single("gambar"), (req, res) => {
   res.json({ url: `http://localhost:5000/uploads/${req.file.filename}` });
 });
 
-// 7. DAFTARKAN RUTE
+// 7. SSE ENDPOINT
+const sseClients = [];
+
+app.get("/api/sse", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+  });
+
+  res.write(": heartbeat\n\n");
+  const heartbeat = setInterval(() => res.write(": heartbeat\n\n"), 30000);
+
+  sseClients.push(res);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    sseClients.splice(sseClients.indexOf(res), 1);
+  });
+});
+
+const notifySSE = (event, data) => {
+  sseClients.forEach((client) => {
+    client.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  });
+};
+
+app.set("notifySSE", notifySSE);
+
+// 8. DAFTARKAN RUTE
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
@@ -47,3 +77,5 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });
+
+module.exports = { notifySSE };

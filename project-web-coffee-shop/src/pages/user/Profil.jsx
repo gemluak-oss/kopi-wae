@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
 
 const Profil = ({ isDark }) => {
   const navigate = useNavigate();
@@ -13,9 +14,6 @@ const Profil = ({ isDark }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [formData, setFormData] = useState({ user_name: "", email: "", no_hp: "" });
 
-  const userLogin = JSON.parse(localStorage.getItem("user")) || null;
-  const token = localStorage.getItem("token");
-
   const bg = isDark ? "bg-[#3A2F2B] text-[#E8D8C6]" : "bg-[#E8D8C6] text-[#3A2F2B]";
   const cardBg = isDark ? "bg-[#2a2522]" : "bg-white";
   const textMuted = isDark ? "text-[#E8D8C6]/50" : "text-[#3A2F2B]/50";
@@ -23,6 +21,7 @@ const Profil = ({ isDark }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const userLogin = JSON.parse(localStorage.getItem("user")) || null;
     if (!userLogin) {
       navigate("/login");
       return;
@@ -31,12 +30,52 @@ const Profil = ({ isDark }) => {
     fetchTotalOrders();
   }, []);
 
+  // ✅ SSE Auto refresh dengan guard
+  useRealtime("profilUpdate", () => {
+    const currentUser = JSON.parse(localStorage.getItem("user")) || null;
+    if (currentUser) fetchProfil();
+  });
+
+  useRealtime("userUpdate", () => {
+    const currentUser = JSON.parse(localStorage.getItem("user")) || null;
+    if (currentUser) fetchProfil();
+  });
+
+  useRealtime("historyUpdate", () => {
+    const currentUser = JSON.parse(localStorage.getItem("user")) || null;
+    if (currentUser) fetchTotalOrders();
+  });
+
   const fetchProfil = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/profil/${userLogin.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const userLogin = JSON.parse(localStorage.getItem("user")) || null;
+      const token = localStorage.getItem("token");
+      if (!userLogin?.id) return;
+
+      const res = await axios.get(`http://localhost:5000/api/user/profil/${userLogin.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setUser(res.data.data);
-      setFormData({ user_name: res.data.data.user_name, email: res.data.data.email, no_hp: res.data.data.no_hp || "" });
+      setFormData({
+        user_name: res.data.data.user_name,
+        email: res.data.data.email,
+        no_hp: res.data.data.no_hp || "",
+      });
       if (res.data.data.foto) setPreview(res.data.data.foto);
+
+      // ✅ Update localStorage biar navbar + komponen lain ikut ke-update
+      const updatedUser = JSON.parse(localStorage.getItem("user")) || {};
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...updatedUser,
+          name: res.data.data.user_name,
+          email: res.data.data.email,
+          foto: res.data.data.foto,
+        }),
+      );
+      window.dispatchEvent(new Event("storage"));
+
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
@@ -45,7 +84,13 @@ const Profil = ({ isDark }) => {
 
   const fetchTotalOrders = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/history/${userLogin.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const userLogin = JSON.parse(localStorage.getItem("user")) || null;
+      const token = localStorage.getItem("token");
+      if (!userLogin?.id) return;
+
+      const res = await axios.get(`http://localhost:5000/api/user/history/${userLogin.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTotalOrders(res.data.data.length);
     } catch (err) {}
   };
@@ -60,6 +105,8 @@ const Profil = ({ isDark }) => {
 
   const handleSave = async () => {
     try {
+      const userLogin = JSON.parse(localStorage.getItem("user")) || null;
+      const token = localStorage.getItem("token");
       let fotoUrl = preview;
       if (selectedFile) {
         const formImg = new FormData();
@@ -68,7 +115,18 @@ const Profil = ({ isDark }) => {
         fotoUrl = uploadRes.data.url;
       }
       await axios.put(`http://localhost:5000/api/user/profil/${userLogin.id}`, { ...formData, foto: fotoUrl || null }, { headers: { Authorization: `Bearer ${token}` } });
-      localStorage.setItem("user", JSON.stringify({ ...userLogin, name: formData.user_name, foto: fotoUrl }));
+
+      // ✅ Update localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...userLogin,
+          name: formData.user_name,
+          foto: fotoUrl,
+        }),
+      );
+      window.dispatchEvent(new Event("storage"));
+
       alert("Profil berhasil diperbarui!");
       setIsEditing(false);
       setSelectedFile(null);
@@ -81,6 +139,7 @@ const Profil = ({ isDark }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    window.dispatchEvent(new Event("storage"));
     setShowLogoutModal(false);
     navigate("/login");
   };
@@ -96,10 +155,8 @@ const Profil = ({ isDark }) => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-        .caramel-btn:hover { background: #3A2F2B; }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; } .caramel-btn:hover { background: #3A2F2B; }
       `}</style>
 
       <main className={`min-h-screen ${bg} font-body py-16`}>
@@ -112,10 +169,9 @@ const Profil = ({ isDark }) => {
           </section>
 
           <div className="grid lg:grid-cols-[380px_1fr] gap-10 items-start">
-            {/* Avatar Card */}
             <div className={`${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
               <div className="flex flex-col items-center text-center">
-                <div className={`w-44 h-44 rounded-full border-2 border-[#C77A23] flex items-center justify-center text-5xl font-serif font-bold overflow-hidden bg-[#C77A23]/10`}>
+                <div className="w-44 h-44 rounded-full border-2 border-[#C77A23] flex items-center justify-center text-5xl font-serif font-bold overflow-hidden bg-[#C77A23]/10">
                   {preview ? <img src={preview} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-[#C77A23]">{user?.user_name?.charAt(0)?.toUpperCase() || "?"}</span>}
                 </div>
                 {isEditing && (
@@ -123,13 +179,12 @@ const Profil = ({ isDark }) => {
                     Pilih Foto <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   </label>
                 )}
-                <h2 className={`font-serif text-2xl font-bold mt-6 truncate ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{user?.user_name || "Coffee Lover"}</h2>
+                <h2 className="font-serif text-2xl font-bold mt-6 truncate">{user?.user_name || "Coffee Lover"}</h2>
                 <span className={`mt-1 text-xs font-body ${textMuted}`}>{user?.email}</span>
                 <span className="mt-4 bg-[#C77A23] text-white rounded-full px-4 py-1 text-xs font-body font-medium uppercase tracking-wider">{user?.role === "admin" ? "Admin" : "Member"}</span>
               </div>
             </div>
 
-            {/* Info & Stats */}
             <div className="space-y-8">
               <div className="bg-[#C77A23] text-white rounded-2xl p-6 flex items-center justify-between shadow-lg">
                 <h3 className="font-serif text-lg font-bold">Statistik</h3>
@@ -147,7 +202,7 @@ const Profil = ({ isDark }) => {
                 <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <p className={`text-[10px] font-body uppercase tracking-wider mb-1 ${textMuted}`}>Personal Information</p>
-                    <h2 className={`font-serif text-2xl font-bold ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Informasi Akun</h2>
+                    <h2 className="font-serif text-2xl font-bold">Informasi Akun</h2>
                   </div>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
@@ -191,11 +246,10 @@ const Profil = ({ isDark }) => {
           </div>
         </div>
 
-        {/* Logout Modal */}
         {showLogoutModal && (
           <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className={`${cardBg} rounded-2xl border ${borderColor} p-8 max-w-sm w-full text-center shadow-2xl`}>
-              <h3 className={`font-serif text-2xl font-bold mb-2 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Konfirmasi</h3>
+              <h3 className="font-serif text-2xl font-bold mb-2">Konfirmasi</h3>
               <p className={`text-sm mb-8 ${textMuted}`}>Apakah kamu yakin ingin keluar?</p>
               <div className="flex gap-4">
                 <button onClick={() => setShowLogoutModal(false)} className={`flex-1 py-3 rounded-xl border ${borderColor} font-body text-sm uppercase font-medium hover:bg-[#C77A23]/5 transition-all`}>

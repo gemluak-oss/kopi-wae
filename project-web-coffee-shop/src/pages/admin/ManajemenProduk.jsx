@@ -1,5 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
+
+const CustomDropdown = ({ value, options, onChange, placeholder = "Pilih", isDark }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const ddBg = isDark ? "bg-slate-800" : "bg-white";
+  const ddBorder = isDark ? "border-slate-600" : "border-slate-200";
+  const selectedLabel = options.find((o) => o.value === value)?.label || placeholder;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 w-full rounded-lg border ${ddBorder} px-4 py-2.5 text-sm font-medium ${ddBg} hover:border-emerald-400 transition-all justify-between ${!value ? "text-slate-400" : ""}`}
+      >
+        <span>{selectedLabel}</span>
+        <svg className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className={`absolute z-50 mt-1 w-full rounded-lg border ${ddBorder} ${ddBg} shadow-xl overflow-hidden max-h-48 overflow-y-auto`}>
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setIsOpen(false);
+            }}
+            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-50 ${!value ? "bg-emerald-50 text-emerald-700 font-semibold" : "text-slate-500"}`}
+          >
+            {placeholder}
+          </button>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-all hover:bg-emerald-50 hover:text-emerald-700 ${opt.value === value ? "bg-emerald-50 text-emerald-700 font-semibold" : "text-slate-600"}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function ManajemenProduk({ isDark }) {
   const [produk, setProduk] = useState([]);
@@ -8,15 +68,7 @@ export default function ManajemenProduk({ isDark }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [formData, setFormData] = useState({
-    nama_kopi: "",
-    id_kategori: "",
-    deskripsi: "",
-    harga_kopi: "",
-    stok: "",
-    stok_minimal: "",
-    gambar: "",
-  });
+  const [formData, setFormData] = useState({ nama_kopi: "", id_kategori: "", deskripsi: "", harga_kopi: "", stok: "", stok_minimal: "", gambar: "" });
 
   const cardBg = isDark ? "bg-slate-900" : "bg-white";
   const border = isDark ? "border-slate-700" : "border-slate-200";
@@ -27,6 +79,10 @@ export default function ManajemenProduk({ isDark }) {
     fetchProduk();
     fetchKategori();
   }, []);
+
+  // ✅ SSE: Auto refresh
+  useRealtime("produkUpdate", () => fetchProduk());
+  useRealtime("kategoriUpdate", () => fetchKategori());
 
   const fetchProduk = async () => {
     try {
@@ -47,6 +103,7 @@ export default function ManajemenProduk({ isDark }) {
     } catch (err) {}
   };
 
+  const kategoriOptions = kategori.map((k) => ({ value: k.id_kategori, label: k.nama_kategori }));
   const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(angka);
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -58,15 +115,7 @@ export default function ManajemenProduk({ isDark }) {
   };
 
   const handleEditClick = (item) => {
-    setFormData({
-      nama_kopi: item.nama_kopi,
-      id_kategori: item.id_kategori,
-      deskripsi: item.deskripsi || "",
-      harga_kopi: item.harga_kopi,
-      stok: item.stok,
-      stok_minimal: item.stok_minimal,
-      gambar: item.gambar || "",
-    });
+    setFormData({ nama_kopi: item.nama_kopi, id_kategori: item.id_kategori, deskripsi: item.deskripsi || "", harga_kopi: item.harga_kopi, stok: item.stok, stok_minimal: item.stok_minimal, gambar: item.gambar || "" });
     setEditingId(item.id_kopi);
     setSelectedFile(null);
     setIsModalOpen(true);
@@ -77,7 +126,7 @@ export default function ManajemenProduk({ isDark }) {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:5000/api/admin/produk/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      fetchProduk();
+      // Ga perlu fetchProduk() karena SSE
     } catch (err) {
       alert("Gagal menghapus");
     }
@@ -102,7 +151,7 @@ export default function ManajemenProduk({ isDark }) {
       }
       setIsModalOpen(false);
       setSelectedFile(null);
-      fetchProduk();
+      // Ga perlu fetchProduk() karena SSE
     } catch (err) {
       alert("Gagal menyimpan");
     }
@@ -123,7 +172,6 @@ export default function ManajemenProduk({ isDark }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manajemen Produk</h1>
@@ -140,7 +188,6 @@ export default function ManajemenProduk({ isDark }) {
         </div>
       </div>
 
-      {/* Table */}
       <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -196,29 +243,21 @@ export default function ManajemenProduk({ isDark }) {
         </div>
       </div>
 
-      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className={`${cardBg} rounded-2xl border ${border} w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl`}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <h2 className="text-lg font-semibold">{editingId ? "Edit Produk" : "Tambah Produk"}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-all">
+              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
                 <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Nama Kopi</label>
-                <input
-                  required
-                  name="nama_kopi"
-                  value={formData.nama_kopi}
-                  onChange={handleInputChange}
-                  className={`w-full rounded-lg border ${border} ${inputBg} px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none`}
-                />
+                <input required name="nama_kopi" value={formData.nama_kopi} onChange={handleInputChange} className={`w-full rounded-lg border ${border} ${inputBg} px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none`} />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Deskripsi</label>
@@ -233,14 +272,7 @@ export default function ManajemenProduk({ isDark }) {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Kategori</label>
-                <select name="id_kategori" value={formData.id_kategori} onChange={handleInputChange} className={`w-full rounded-lg border ${border} ${inputBg} px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none`}>
-                  <option value="">Pilih Kategori</option>
-                  {kategori.map((k) => (
-                    <option key={k.id_kategori} value={k.id_kategori}>
-                      {k.nama_kategori}
-                    </option>
-                  ))}
-                </select>
+                <CustomDropdown value={formData.id_kategori} options={kategoriOptions} onChange={(val) => setFormData({ ...formData, id_kategori: val })} placeholder="Pilih Kategori" isDark={isDark} />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>

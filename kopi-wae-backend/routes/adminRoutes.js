@@ -25,6 +25,9 @@ router.delete("/produk/:id", (req, res) => {
     db.query("DELETE FROM ITEM_KERANJANG WHERE id_kopi = ?", [id], (err) => {
       db.query("DELETE FROM KOPI WHERE id_kopi = ?", [id], (err) => {
         if (err) return res.status(500).json({ message: "Gagal menghapus produk" });
+        // ✅ SSE
+        const notifySSE = req.app.get("notifySSE");
+        if (notifySSE) notifySSE("produkUpdate", { message: "Produk dihapus" });
         res.json({ message: "Produk berhasil dihapus" });
       });
     });
@@ -59,23 +62,38 @@ router.post("/users", async (req, res) => {
   const hashed = await bcrypt.hash(password, salt);
   db.query("INSERT INTO USER (user_name, email, password, role, no_hp) VALUES (?, ?, ?, ?, ?)", [user_name, email, hashed, role || "user", no_hp || null], (err) => {
     if (err) return res.status(500).json({ message: "Error" });
+    // ✅ SSE
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("userUpdate", { message: "User ditambahkan" });
     res.status(201).json({ message: "User ditambahkan" });
   });
 });
 
 router.put("/users/:id", async (req, res) => {
   const { user_name, email, password, role, no_hp, foto } = req.body;
+  const notifySSE = req.app.get("notifySSE");
+
   if (password) {
     const bcrypt = require("bcryptjs");
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
     db.query("UPDATE USER SET user_name=?, email=?, password=?, role=?, no_hp=?, foto=? WHERE id_user=?", [user_name, email, hashed, role, no_hp, foto || null, req.params.id], (err) => {
       if (err) return res.status(500).json({ message: "Error" });
+      // ✅ SSE
+      if (notifySSE) {
+        notifySSE("userUpdate", { userId: req.params.id, action: "update" });
+        notifySSE("profilUpdate", { userId: req.params.id, action: "update" });
+      }
       res.json({ message: "User diupdate" });
     });
   } else {
     db.query("UPDATE USER SET user_name=?, email=?, role=?, no_hp=?, foto=? WHERE id_user=?", [user_name, email, role, no_hp, foto || null, req.params.id], (err) => {
       if (err) return res.status(500).json({ message: "Error" });
+      // ✅ SSE
+      if (notifySSE) {
+        notifySSE("userUpdate", { userId: req.params.id, action: "update" });
+        notifySSE("profilUpdate", { userId: req.params.id, action: "update" });
+      }
       res.json({ message: "User diupdate" });
     });
   }
@@ -95,6 +113,9 @@ router.delete("/users/:id", (req, res) => {
               db.query("DELETE FROM KERANJANG WHERE id_user = ?", [id], (err) => {
                 db.query("DELETE FROM USER WHERE id_user = ?", [id], (err) => {
                   if (err) return res.status(500).json({ message: "Error" });
+                  // ✅ SSE
+                  const notifySSE = req.app.get("notifySSE");
+                  if (notifySSE) notifySSE("userUpdate", { message: "User dihapus" });
                   res.json({ message: "User dihapus" });
                 });
               });
@@ -107,17 +128,11 @@ router.delete("/users/:id", (req, res) => {
 });
 
 // ==================== VOUCHER ====================
-
-// GET all voucher dengan statistik
 router.get("/voucher", (req, res) => {
   db.query(
-    `SELECT v.*, 
-      COUNT(vu.id_usage) as total_digunakan,
-      COUNT(DISTINCT vu.id_user) as total_user
-     FROM VOUCHER v
-     LEFT JOIN VOUCHER_USAGE vu ON v.id_voucher = vu.id_voucher
-     GROUP BY v.id_voucher
-     ORDER BY v.id_voucher DESC`,
+    `SELECT v.*, COUNT(vu.id_usage) as total_digunakan, COUNT(DISTINCT vu.id_user) as total_user
+     FROM VOUCHER v LEFT JOIN VOUCHER_USAGE vu ON v.id_voucher = vu.id_voucher
+     GROUP BY v.id_voucher ORDER BY v.id_voucher DESC`,
     (err, results) => {
       if (err) return res.status(500).json({ message: "Error" });
       res.json({ data: results });
@@ -125,22 +140,22 @@ router.get("/voucher", (req, res) => {
   );
 });
 
-// POST tambah voucher
 router.post("/voucher", (req, res) => {
   const { kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user } = req.body;
   if (!kode || !diskon_persen) return res.status(400).json({ message: "Kode & diskon wajib" });
-
   db.query(
     "INSERT INTO VOUCHER (kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user) VALUES (?, ?, ?, ?, ?, ?)",
     [kode.toUpperCase(), diskon_persen, max_diskon || null, min_belanja || 0, kuota || 100, max_usage_per_user || 1],
     (err) => {
       if (err) return res.status(500).json({ message: "Error" });
+      // ✅ SSE
+      const notifySSE = req.app.get("notifySSE");
+      if (notifySSE) notifySSE("voucherUpdate", { message: "Voucher ditambahkan" });
       res.status(201).json({ message: "Voucher ditambahkan" });
     },
   );
 });
 
-// PUT update voucher
 router.put("/voucher/:id", (req, res) => {
   const { kode, diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user } = req.body;
   db.query(
@@ -148,16 +163,21 @@ router.put("/voucher/:id", (req, res) => {
     [kode.toUpperCase(), diskon_persen, max_diskon, min_belanja, kuota, max_usage_per_user || 1, req.params.id],
     (err) => {
       if (err) return res.status(500).json({ message: "Error" });
+      // ✅ SSE
+      const notifySSE = req.app.get("notifySSE");
+      if (notifySSE) notifySSE("voucherUpdate", { message: "Voucher diupdate" });
       res.json({ message: "Voucher diupdate" });
     },
   );
 });
 
-// DELETE voucher
 router.delete("/voucher/:id", (req, res) => {
   db.query("DELETE FROM VOUCHER_USAGE WHERE id_voucher = ?", [req.params.id], (err) => {
     db.query("DELETE FROM VOUCHER WHERE id_voucher = ?", [req.params.id], (err) => {
       if (err) return res.status(500).json({ message: "Error" });
+      // ✅ SSE
+      const notifySSE = req.app.get("notifySSE");
+      if (notifySSE) notifySSE("voucherUpdate", { message: "Voucher dihapus" });
       res.json({ message: "Voucher dihapus" });
     });
   });

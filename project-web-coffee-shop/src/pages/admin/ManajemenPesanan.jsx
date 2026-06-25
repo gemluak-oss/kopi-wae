@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
 
 export default function ManajemenPesanan({ isDark }) {
   const [pesanan, setPesanan] = useState([]);
@@ -21,6 +22,11 @@ export default function ManajemenPesanan({ isDark }) {
     else setPesanan(allPesanan.filter((o) => o.status_pesanan === filterStatus));
   }, [filterStatus, allPesanan]);
 
+  // ✅ SSE: Auto refresh
+  useRealtime("pesananBaru", () => fetchPesanan());
+  useRealtime("pesananUpdate", () => fetchPesanan());
+  useRealtime("statusUpdate", () => fetchPesanan());
+
   const fetchPesanan = async () => {
     setIsLoading(true);
     try {
@@ -36,7 +42,7 @@ export default function ManajemenPesanan({ isDark }) {
   const updateStatus = async (id, newStatus) => {
     try {
       await axios.put(`http://localhost:5000/api/admin/pesanan/${id}`, { status_pesanan: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
-      fetchPesanan();
+      // Ga perlu fetchPesanan() karena SSE bakal trigger
     } catch (err) {
       alert("Gagal update status");
     }
@@ -76,7 +82,6 @@ export default function ManajemenPesanan({ isDark }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manajemen Pesanan</h1>
@@ -90,7 +95,6 @@ export default function ManajemenPesanan({ isDark }) {
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { label: "Total Orders", value: totalPesanan, icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", color: "text-slate-600" },
@@ -117,7 +121,6 @@ export default function ManajemenPesanan({ isDark }) {
         ))}
       </div>
 
-      {/* Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         {["semua", "menunggu", "diproses", "dikirim", "selesai", "dibatalkan"].map((s) => (
           <button
@@ -130,7 +133,6 @@ export default function ManajemenPesanan({ isDark }) {
         ))}
       </div>
 
-      {/* Table */}
       <div className={`${cardBg} rounded-xl border ${border} shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">

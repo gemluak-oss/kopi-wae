@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime"; // ✅ import
 
 const Keranjang = ({ isDark }) => {
   const navigate = useNavigate();
@@ -27,6 +28,9 @@ const Keranjang = ({ isDark }) => {
     }
     fetchKeranjang();
   }, []);
+
+  // ✅ Auto refresh
+  useRealtime("keranjangUpdate", () => fetchKeranjang());
 
   const fetchKeranjang = async () => {
     try {
@@ -77,9 +81,7 @@ const Keranjang = ({ isDark }) => {
   };
 
   const kosongkanKeranjang = async () => {
-    for (let item of items) {
-      await axios.delete(`http://localhost:5000/api/user/keranjang/${item.id_itemkeranjang}`, { headers: { Authorization: `Bearer ${token}` } });
-    }
+    for (let item of items) await axios.delete(`http://localhost:5000/api/user/keranjang/${item.id_itemkeranjang}`, { headers: { Authorization: `Bearer ${token}` } });
     await fetchKeranjang();
     window.dispatchEvent(new Event("keranjangChanged"));
   };
@@ -87,7 +89,6 @@ const Keranjang = ({ isDark }) => {
   const totalItem = items.reduce((total, item) => total + item.qty, 0);
   const subtotal = items.reduce((total, item) => total + item.harga_kopi * item.qty, 0);
   const total = subtotal + (items.length > 0 ? ongkir : 0);
-
   const handleCheckout = () => {
     if (items.length === 0) {
       alert("Keranjang kosong.");
@@ -120,12 +121,9 @@ const Keranjang = ({ isDark }) => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-        .caramel-btn:hover { background: #3A2F2B; }
-        .cart-item { border-radius: 12px; border: 1px solid rgba(199,122,35,0.2); transition: all 0.3s ease; }
-        .cart-item:hover { border-color: rgba(199,122,35,0.4); }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; } .caramel-btn:hover { background: #3A2F2B; }
+        .cart-item { border-radius: 12px; border: 1px solid rgba(199,122,35,0.2); transition: all 0.3s ease; } .cart-item:hover { border-color: rgba(199,122,35,0.4); }
       `}</style>
 
       <main className={`min-h-screen ${bg} font-body py-16`}>
@@ -140,7 +138,7 @@ const Keranjang = ({ isDark }) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <section className="lg:col-span-2">
               <div className="flex justify-between items-end mb-6">
-                <h2 className={`font-body font-bold text-lg uppercase tracking-wider ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Daftar Belanja ({totalItem} Item)</h2>
+                <h2 className="font-body font-bold text-lg uppercase tracking-wider">Daftar Belanja ({totalItem} Item)</h2>
                 {items.length > 0 && (
                   <button onClick={kosongkanKeranjang} className="text-xs text-red-400 font-body font-medium uppercase hover:text-red-600 transition-colors">
                     Kosongkan
@@ -150,7 +148,7 @@ const Keranjang = ({ isDark }) => {
               <div className={`${cardBg} rounded-2xl border ${borderColor} shadow-xl divide-y divide-[#C77A23]/10`}>
                 {items.length === 0 ? (
                   <div className="p-12 text-center">
-                    <h2 className={`font-serif text-xl font-bold mb-2 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Keranjang Kosong</h2>
+                    <h2 className="font-serif text-xl font-bold mb-2">Keranjang Kosong</h2>
                     <button onClick={() => navigate("/home/produk")} className="caramel-btn px-6 py-3 text-xs mt-6">
                       Mulai Belanja
                     </button>
@@ -188,18 +186,18 @@ const Keranjang = ({ isDark }) => {
 
             <aside className="h-fit sticky top-28">
               <div className={`${cardBg} rounded-2xl border ${borderColor} p-6 shadow-xl`}>
-                <h2 className={`font-serif text-lg font-bold mb-6 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Ringkasan</h2>
+                <h2 className="font-serif text-lg font-bold mb-6">Ringkasan</h2>
                 <div className="space-y-3 text-xs font-body uppercase mb-6">
-                  <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
+                  <div className="flex justify-between border-b border-dashed pb-2">
                     <span className={textMuted}>Item</span>
                     <span className="font-medium">{totalItem} Porsi</span>
                   </div>
-                  <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
+                  <div className="flex justify-between border-b border-dashed pb-2">
                     <span className={textMuted}>Subtotal</span>
                     <span className="font-medium">{formatRupiah(subtotal)}</span>
                   </div>
                   {items.length > 0 && (
-                    <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
+                    <div className="flex justify-between border-b border-dashed pb-2">
                       <span className={textMuted}>Ongkir</span>
                       <span className="font-medium">{formatRupiah(ongkir)}</span>
                     </div>
@@ -214,7 +212,7 @@ const Keranjang = ({ isDark }) => {
                 <button onClick={handleCheckout} disabled={items.length === 0} className="w-full h-12 rounded-xl bg-[#3A2F2B] text-white font-body font-bold uppercase text-xs hover:bg-[#C77A23] transition-all disabled:opacity-30">
                   Checkout
                 </button>
-                <button onClick={() => navigate("/home/produk")} className={`w-full h-12 rounded-xl border ${borderColor} ${cardBg} font-body font-bold uppercase text-xs mt-3 hover:bg-[#C77A23]/5 transition-all`}>
+                <button onClick={() => navigate("/home/produk")} className="w-full h-12 rounded-xl border ${borderColor} ${cardBg} font-body font-bold uppercase text-xs mt-3 hover:bg-[#C77A23]/5 transition-all">
                   Lanjut Belanja
                 </button>
               </div>

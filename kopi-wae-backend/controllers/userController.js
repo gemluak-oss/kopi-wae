@@ -31,7 +31,6 @@ const getMenuProduk = (req, res) => {
     params.push(`%${search}%`);
   }
   query += " ORDER BY k.id_kopi DESC";
-
   db.query(query, params, (err, results) => {
     if (err) return res.status(500).json({ message: "Error", error: err });
     res.json({ data: results });
@@ -40,11 +39,7 @@ const getMenuProduk = (req, res) => {
 
 const getDetailProduk = (req, res) => {
   const { id } = req.params;
-  const query = `
-    SELECT k.*, kt.nama_kategori 
-    FROM KOPI k JOIN KATEGORI kt ON k.id_kategori = kt.id_kategori 
-    WHERE k.id_kopi = ?
-  `;
+  const query = `SELECT k.*, kt.nama_kategori FROM KOPI k JOIN KATEGORI kt ON k.id_kategori = kt.id_kategori WHERE k.id_kopi = ?`;
   db.query(query, [id], (err, results) => {
     if (err) return res.status(500).json({ message: "Error", error: err });
     if (results.length === 0) return res.status(404).json({ message: "Produk tidak ditemukan" });
@@ -85,11 +80,17 @@ const addToKeranjang = (req, res) => {
         if (items.length > 0) {
           db.query("UPDATE ITEM_KERANJANG SET qty = qty + ? WHERE id_itemkeranjang = ?", [qty, items[0].id_itemkeranjang], (err) => {
             if (err) return res.status(500).json({ message: "Error", error: err });
+            // ✅ SSE
+            const notifySSE = req.app.get("notifySSE");
+            if (notifySSE) notifySSE("keranjangUpdate", { userId });
             res.json({ message: "Jumlah diupdate" });
           });
         } else {
           db.query("INSERT INTO ITEM_KERANJANG (id_keranjang, id_kopi, qty) VALUES (?, ?, ?)", [idKeranjang, kopiId, qty], (err) => {
             if (err) return res.status(500).json({ message: "Error", error: err });
+            // ✅ SSE
+            const notifySSE = req.app.get("notifySSE");
+            if (notifySSE) notifySSE("keranjangUpdate", { userId });
             res.status(201).json({ message: "Item ditambahkan" });
           });
         }
@@ -109,7 +110,6 @@ const addToKeranjang = (req, res) => {
 
 // ==================== CHECKOUT ====================
 const prosesCheckout = (req, res) => {
-  // ✅ Ambil diskon & total dari FE
   const { userId, metodePembayaran, diskon, total: totalDariFE } = req.body;
   if (!userId) return res.status(400).json({ message: "userId wajib diisi" });
 
@@ -130,8 +130,6 @@ const prosesCheckout = (req, res) => {
     }
 
     const subtotal = items.reduce((sum, i) => sum + i.qty * i.harga_kopi, 0);
-
-    // ✅ Pake total dari FE kalo ada, kalo ga hitung sendiri
     const totalHarga = totalDariFE || subtotal + 10000 - (diskon || 0);
 
     db.query("INSERT INTO TRANSAKSI (id_user, tgl_transaksi, total_harga, status_pesanan) VALUES (?, NOW(), ?, ?)", [userId, totalHarga, "menunggu"], (err, result) => {
@@ -146,15 +144,18 @@ const prosesCheckout = (req, res) => {
 
       const metode = metodePembayaran || "Transfer Bank";
       db.query("INSERT INTO PEMBAYARAN (id_transaksi, metode_pembayaran, tgl_pembayaran, status_pembayaran) VALUES (?, ?, NOW(), ?)", [idTransaksi, metode, "selesai"]);
-
       db.query("DELETE FROM ITEM_KERANJANG WHERE id_keranjang = (SELECT id_keranjang FROM KERANJANG WHERE id_user = ?)", [userId]);
 
-      res.status(201).json({
-        message: "Checkout berhasil",
-        id_transaksi: idTransaksi,
-        total: totalHarga,
-        diskon: diskon || 0,
-      });
+      // ✅ SSE
+      const notifySSE = req.app.get("notifySSE");
+      if (notifySSE) {
+        notifySSE("pesananBaru", { message: "Pesanan baru masuk!" });
+        notifySSE("historyUpdate", { userId });
+        notifySSE("keranjangUpdate", { userId });
+        notifySSE("produkUpdate", { message: "Stok diupdate" });
+      }
+
+      res.status(201).json({ message: "Checkout berhasil", id_transaksi: idTransaksi, total: totalHarga, diskon: diskon || 0 });
     });
   });
 };

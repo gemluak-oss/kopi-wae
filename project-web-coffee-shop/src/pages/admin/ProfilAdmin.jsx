@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
 
 export default function ProfilAdmin({ isDark }) {
   const [user, setUser] = useState(null);
@@ -18,6 +19,10 @@ export default function ProfilAdmin({ isDark }) {
     fetchProfil();
   }, []);
 
+  // ✅ SSE: Auto refresh
+  useRealtime("profilUpdate", () => fetchProfil());
+  useRealtime("userUpdate", () => fetchProfil());
+
   const fetchProfil = async () => {
     try {
       const userLogin = JSON.parse(localStorage.getItem("user")) || null;
@@ -27,6 +32,10 @@ export default function ProfilAdmin({ isDark }) {
       setUser(res.data.data);
       setFormData({ user_name: res.data.data.user_name, email: res.data.data.email, no_hp: res.data.data.no_hp || "" });
       if (res.data.data.foto) setPreview(res.data.data.foto);
+
+      // Update localStorage
+      localStorage.setItem("user", JSON.stringify({ ...userLogin, name: res.data.data.user_name, email: res.data.data.email, foto: res.data.data.foto }));
+      window.dispatchEvent(new Event("storage"));
     } catch (err) {}
   };
 
@@ -43,11 +52,11 @@ export default function ProfilAdmin({ isDark }) {
       }
       await axios.put(`http://localhost:5000/api/user/profil/${userLogin.id}`, { user_name: formData.user_name, email: formData.email, no_hp: formData.no_hp, foto: fotoUrl }, { headers: { Authorization: `Bearer ${token}` } });
       localStorage.setItem("user", JSON.stringify({ ...userLogin, name: formData.user_name, email: formData.email, foto: fotoUrl }));
-      window.dispatchEvent(new Event("adminUpdated"));
+      window.dispatchEvent(new Event("storage"));
       alert("Profil berhasil diperbarui!");
       setIsEditing(false);
       setSelectedFile(null);
-      fetchProfil();
+      // Ga perlu fetchProfil() karena SSE
     } catch (err) {
       alert("Gagal update profil");
     }
@@ -74,7 +83,6 @@ export default function ProfilAdmin({ isDark }) {
       </div>
 
       <div className={`${cardBg} rounded-2xl border ${border} p-8 shadow-sm`}>
-        {/* Avatar */}
         <div className="flex flex-col items-center mb-8">
           <div className={`w-28 h-28 rounded-full border-2 ${isDark ? "border-slate-600" : "border-slate-200"} flex items-center justify-center overflow-hidden bg-slate-100`}>
             {preview ? <img src={preview} alt="" className="w-full h-full object-cover" /> : <span className="text-3xl font-bold text-slate-400">{user.user_name?.charAt(0).toUpperCase()}</span>}
@@ -98,7 +106,6 @@ export default function ProfilAdmin({ isDark }) {
           )}
         </div>
 
-        {/* Form */}
         <div className="space-y-5">
           {[
             { label: "Nama Lengkap", key: "user_name", type: "text" },
@@ -121,7 +128,6 @@ export default function ProfilAdmin({ isDark }) {
           ))}
         </div>
 
-        {/* Actions */}
         <div className="mt-8 pt-4 border-t border-slate-200 flex gap-3">
           {isEditing ? (
             <>

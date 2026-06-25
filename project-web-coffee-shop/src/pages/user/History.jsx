@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime"; // ✅ import
 
 const History = ({ isDark }) => {
   const [orders, setOrders] = useState([]);
@@ -25,11 +26,15 @@ const History = ({ isDark }) => {
     fetchHistory();
   }, []);
 
+  // ✅ Auto refresh
+  useRealtime("historyUpdate", (data) => {
+    if (data.userId === user?.id) fetchHistory();
+  });
+  useRealtime("statusUpdate", () => fetchHistory());
+
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/history/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`http://localhost:5000/api/user/history/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
       setOrders(res.data.data);
       setIsLoading(false);
     } catch (err) {
@@ -40,9 +45,7 @@ const History = ({ isDark }) => {
 
   const fetchDetailPesanan = async (idTransaksi) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/history/detail/${idTransaksi}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`http://localhost:5000/api/user/history/detail/${idTransaksi}`, { headers: { Authorization: `Bearer ${token}` } });
       setSelectedOrder(res.data.data);
     } catch (err) {
       console.error("Gagal ambil detail:", err);
@@ -54,43 +57,24 @@ const History = ({ isDark }) => {
   const formatDateTime = (dateStr) => new Date(dateStr).toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   const getStatusStyle = (status) => {
-    const colors = {
-      selesai: "bg-green-500 text-white",
-      dikirim: "bg-blue-500 text-white",
-      diproses: "bg-[#C77A23] text-white",
-      dibatalkan: "bg-red-500 text-white",
-      menunggu: "bg-purple-500 text-white",
-    };
-    return colors[status] || "bg-gray-500 text-white";
+    const c = { selesai: "bg-green-500 text-white", dikirim: "bg-blue-500 text-white", diproses: "bg-[#C77A23] text-white", dibatalkan: "bg-red-500 text-white", menunggu: "bg-purple-500 text-white" };
+    return c[status] || "bg-gray-500 text-white";
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <main className={`min-h-screen ${bg} font-body flex items-center justify-center`}>
         <div className={`px-8 py-4 rounded-full border ${borderColor} ${cardBg} text-sm uppercase tracking-wider animate-pulse shadow-lg`}>Memuat riwayat...</div>
       </main>
     );
-  }
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn {
-          background: #C77A23; color: white; border-radius: 10px;
-          transition: all 0.3s ease; font-family: 'Roboto', sans-serif;
-          font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .caramel-btn:hover { background: #3A2F2B; }
-        .order-card {
-          border-radius: 16px; border: 1px solid rgba(199,122,35,0.2);
-          transition: all 0.4s ease; overflow: hidden;
-        }
-        .order-card:hover {
-          box-shadow: 0 10px 25px rgba(199,122,35,0.2); transform: translateY(-4px);
-        }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; } .caramel-btn:hover { background: #3A2F2B; }
+        .order-card { border-radius: 16px; border: 1px solid rgba(199,122,35,0.2); transition: all 0.4s ease; overflow: hidden; } .order-card:hover { box-shadow: 0 10px 25px rgba(199,122,35,0.2); transform: translateY(-4px); }
       `}</style>
 
       <main className={`min-h-screen ${bg} font-body py-16`}>
@@ -104,7 +88,7 @@ const History = ({ isDark }) => {
 
           {orders.length === 0 ? (
             <div className={`${cardBg} rounded-2xl border ${borderColor} p-12 text-center shadow-xl max-w-2xl mx-auto`}>
-              <h2 className={`font-serif text-2xl font-bold mb-3 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Belum Ada Pesanan</h2>
+              <h2 className={`font-serif text-2xl font-bold mb-3`}>Belum Ada Pesanan</h2>
               <p className={`text-sm mb-8 ${textMuted}`}>Riwayat transaksi akan muncul setelah checkout.</p>
               <button onClick={() => navigate("/home/produk")} className="caramel-btn px-6 py-3 text-xs">
                 Mulai Belanja
@@ -158,7 +142,6 @@ const History = ({ isDark }) => {
                   X
                 </button>
               </div>
-
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4 text-xs font-body uppercase">
                   <div className={`rounded-xl border ${borderColor} p-3`}>
@@ -170,18 +153,16 @@ const History = ({ isDark }) => {
                     <p className="font-medium">{formatDateTime(selectedOrder.tgl_transaksi)}</p>
                   </div>
                 </div>
-
                 <div className={`rounded-xl border ${borderColor} p-3 text-xs font-body uppercase`}>
                   <p className={`mb-1 ${textMuted}`}>Metode Pembayaran</p>
                   <p className="font-medium">{selectedOrder.metode_pembayaran || "-"}</p>
                 </div>
-
                 <div>
                   <h3 className={`font-serif font-bold text-sm mb-3 pb-2 border-b border-dashed ${borderColor}`}>Produk Dipesan</h3>
                   <div className="space-y-3">
                     {selectedOrder.items?.map((item, i) => (
                       <div key={i} className={`flex items-center gap-3 rounded-xl border border-dashed ${borderColor} p-3`}>
-                        <div className={`w-12 h-12 rounded-lg overflow-hidden bg-stone-200 flex-shrink-0`}>
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-stone-200 flex-shrink-0">
                           <img src={item.gambar || "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=100"} alt={item.nama_kopi} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -195,7 +176,6 @@ const History = ({ isDark }) => {
                     ))}
                   </div>
                 </div>
-
                 <div className="border-t border-[#C77A23]/20 pt-4 space-y-2">
                   <div className={`flex justify-between text-xs font-body uppercase ${textMuted}`}>
                     <span>Subtotal</span>
@@ -203,16 +183,15 @@ const History = ({ isDark }) => {
                   </div>
                   {selectedOrder.items &&
                     (() => {
-                      const subtotalItems = selectedOrder.items.reduce((s, i) => s + Number(i.subtotal), 0);
-                      const diskon = subtotalItems - Number(selectedOrder.total_harga);
-                      if (diskon > 0) {
+                      const s = selectedOrder.items.reduce((a, i) => a + Number(i.subtotal), 0);
+                      const d = s - Number(selectedOrder.total_harga);
+                      if (d > 0)
                         return (
                           <div className="flex justify-between text-xs font-body uppercase text-green-500 font-medium">
                             <span>Diskon</span>
-                            <span>- {formatRupiah(diskon)}</span>
+                            <span>- {formatRupiah(d)}</span>
                           </div>
                         );
-                      }
                       return null;
                     })()}
                   <div className="flex justify-between items-center pt-2 border-t border-dashed border-[#C77A23]/20">
@@ -221,7 +200,6 @@ const History = ({ isDark }) => {
                   </div>
                 </div>
               </div>
-
               <div className="p-4 border-t border-[#C77A23]/20">
                 <button onClick={() => setSelectedOrder(null)} className="w-full py-3 rounded-xl bg-[#3A2F2B] text-white font-body text-sm uppercase tracking-wider hover:bg-[#C77A23] transition-all">
                   Tutup

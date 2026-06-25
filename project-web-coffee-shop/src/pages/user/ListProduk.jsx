@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime"; // ✅ import
 
 export default function ListProduk({ isDark }) {
   const [products, setProducts] = useState([]);
@@ -11,7 +12,6 @@ export default function ListProduk({ isDark }) {
 
   const navigate = useNavigate();
 
-  // Dynamic Caramelo Quente styles
   const bg = isDark ? "bg-[#3A2F2B] text-[#E8D8C6]" : "bg-[#E8D8C6] text-[#3A2F2B]";
   const cardBg = isDark ? "bg-[#2a2522]" : "bg-white";
   const textMuted = isDark ? "text-[#E8D8C6]/50" : "text-[#3A2F2B]/50";
@@ -22,6 +22,10 @@ export default function ListProduk({ isDark }) {
   useEffect(() => {
     fetchProduk();
   }, [activeCategory]);
+
+  // ✅ Auto refresh realtime
+  useRealtime("produkUpdate", () => fetchProduk());
+  useRealtime("kategoriUpdate", () => fetchKategori());
 
   const fetchKategori = async () => {
     try {
@@ -56,49 +60,15 @@ export default function ListProduk({ isDark }) {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn {
-          background: #C77A23; color: white; border-radius: 10px;
-          transition: all 0.3s ease; font-family: 'Roboto', sans-serif;
-          font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .caramel-btn:hover { background: #3A2F2B; }
-        .card-product {
-          border-radius: 16px; border: 1px solid rgba(199,122,35,0.25);
-          transition: all 0.4s ease-in-out; overflow: hidden;
-          box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-        }
-        .card-product:hover {
-          box-shadow: 0 12px 28px rgba(199,122,35,0.2);
-          transform: translateY(-6px);
-        }
-        .filter-btn {
-          border-radius: 10px; font-family: 'Roboto', sans-serif;
-          font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
-          letter-spacing: 0.05em; padding: 0.75rem 1.5rem;
-          transition: all 0.3s ease; border: 1px solid rgba(199,122,35,0.3);
-        }
-        .filter-btn.active {
-          background: #C77A23; color: white; border-color: #C77A23;
-          box-shadow: 0 4px 12px rgba(199,122,35,0.3);
-        }
-        .filter-btn:not(.active):hover {
-          background: rgba(199,122,35,0.1); border-color: #C77A23;
-        }
-        .search-input {
-          border-radius: 10px; font-family: 'Roboto', sans-serif;
-          border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease;
-        }
-        .search-input:focus {
-          border-color: #C77A23; box-shadow: 0 0 0 3px rgba(199,122,35,0.1);
-          outline: none;
-        }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; } .caramel-btn:hover { background: #3A2F2B; }
+        .card-product { border-radius: 16px; border: 1px solid rgba(199,122,35,0.25); transition: all 0.4s ease-in-out; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.08); } .card-product:hover { box-shadow: 0 12px 28px rgba(199,122,35,0.2); transform: translateY(-6px); }
+        .filter-btn { border-radius: 10px; font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1.5rem; transition: all 0.3s ease; border: 1px solid rgba(199,122,35,0.3); } .filter-btn.active { background: #C77A23; color: white; border-color: #C77A23; box-shadow: 0 4px 12px rgba(199,122,35,0.3); } .filter-btn:not(.active):hover { background: rgba(199,122,35,0.1); border-color: #C77A23; }
+        .search-input { border-radius: 10px; font-family: 'Roboto', sans-serif; border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease; } .search-input:focus { border-color: #C77A23; box-shadow: 0 0 0 3px rgba(199,122,35,0.1); outline: none; }
       `}</style>
 
       <section className={`min-h-screen py-24 font-body ${bg}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
-          {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
             <div className="max-w-md w-full">
               <span className="text-xs uppercase tracking-[0.2em] text-[#C77A23] block mb-2 font-medium">Selection</span>
@@ -119,8 +89,6 @@ export default function ListProduk({ isDark }) {
                 </button>
               </div>
             </div>
-
-            {/* Filter Buttons */}
             <div className="flex flex-wrap gap-3">
               <button onClick={() => setActiveCategory("semua")} className={`filter-btn ${activeCategory === "semua" ? "active" : isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>
                 Semua
@@ -133,7 +101,6 @@ export default function ListProduk({ isDark }) {
             </div>
           </div>
 
-          {/* Product Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoading ? (
               <div className="col-span-full py-24 text-center">

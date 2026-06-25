@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime"; // ✅ import
 
 const DetailProduk = ({ isDark }) => {
   const [jumlah, setJumlah] = useState(1);
@@ -20,25 +21,26 @@ const DetailProduk = ({ isDark }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (id) {
-      fetchProduk(id);
-    } else {
+    if (id) fetchProduk(id);
+    else {
       setError("Silakan pilih produk dari halaman Menu.");
       setIsLoading(false);
     }
   }, [id]);
 
+  // ✅ Auto refresh
+  useRealtime("produkUpdate", () => {
+    if (id) fetchProduk(id);
+  });
+
   const fetchProduk = async (produkId) => {
     try {
       const res = await axios.get(`http://localhost:5000/api/user/produk/${produkId}`);
       setProdukAktif(res.data.data);
-
       if (res.data.data.id_kategori) {
         const terkait = await axios.get(`http://localhost:5000/api/user/produk?kategori=${res.data.data.id_kategori}`);
-        const filtered = terkait.data.data.filter((p) => p.id_kopi !== res.data.data.id_kopi).slice(0, 4);
-        setProdukTerkait(filtered);
+        setProdukTerkait(terkait.data.data.filter((p) => p.id_kopi !== res.data.data.id_kopi).slice(0, 4));
       }
-
       setIsLoading(false);
     } catch (err) {
       setError("Produk tidak ditemukan");
@@ -110,26 +112,13 @@ const DetailProduk = ({ isDark }) => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn {
-          background: #C77A23; color: white; border-radius: 10px;
-          transition: all 0.3s ease; font-family: 'Roboto', sans-serif;
-          font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .caramel-btn:hover { background: #3A2F2B; }
-        .card-related {
-          border-radius: 12px; border: 1px solid rgba(199,122,35,0.2);
-          transition: all 0.4s ease; overflow: hidden;
-        }
-        .card-related:hover {
-          box-shadow: 0 10px 25px rgba(199,122,35,0.2); transform: translateY(-4px);
-        }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; } .caramel-btn:hover { background: #3A2F2B; }
+        .card-related { border-radius: 12px; border: 1px solid rgba(199,122,35,0.2); transition: all 0.4s ease; overflow: hidden; } .card-related:hover { box-shadow: 0 10px 25px rgba(199,122,35,0.2); transform: translateY(-4px); }
       `}</style>
 
       <main className={`min-h-screen ${bg} font-body py-10`}>
         <div className="max-w-6xl mx-auto px-6">
-          {/* Breadcrumb */}
           <nav className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] mb-8 font-medium">
             <button onClick={() => navigate("/home")} className="hover:text-[#C77A23] transition-all">
               Beranda
@@ -142,9 +131,7 @@ const DetailProduk = ({ isDark }) => {
             <span className="text-[#C77A23]">{produkAktif.nama_kategori}</span>
           </nav>
 
-          {/* Detail Produk */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Gambar */}
             <div className={`lg:col-span-5 ${cardBg} rounded-2xl border ${borderColor} p-3 shadow-xl relative h-fit`}>
               <span className={`absolute top-4 left-4 z-10 text-[10px] font-body font-medium px-3 py-1.5 rounded-full uppercase tracking-wider ${produkAktif.stok > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
                 {produkAktif.stok > 0 ? "Tersedia" : "Habis"}
@@ -154,15 +141,11 @@ const DetailProduk = ({ isDark }) => {
               </div>
             </div>
 
-            {/* Info */}
             <div className={`lg:col-span-7 ${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
               <span className="inline-block text-[10px] font-body font-medium text-[#C77A23] uppercase tracking-[0.15em] mb-3 bg-[#C77A23]/10 px-3 py-1 rounded-full">{produkAktif.nama_kategori}</span>
               <h1 className={`font-serif text-3xl md:text-4xl font-bold mb-3 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{produkAktif.nama_kopi}</h1>
-
               {produkAktif.deskripsi && <p className={`font-body text-sm leading-relaxed mb-5 ${textMuted}`}>{produkAktif.deskripsi}</p>}
-
               <div className="inline-block bg-[#C77A23] text-white rounded-xl px-6 py-3 font-body text-2xl font-bold mb-6 shadow-lg shadow-[#C77A23]/20">{formatRupiah(produkAktif.harga_kopi)}</div>
-
               <div className="border-t border-dashed border-[#C77A23]/20 pt-5 mb-6">
                 <div className="flex items-center gap-3">
                   <span className={`text-xs font-body uppercase tracking-wider ${textMuted}`}>Stok</span>
@@ -171,7 +154,6 @@ const DetailProduk = ({ isDark }) => {
                   </span>
                 </div>
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className={`flex items-center rounded-xl border ${borderColor} ${cardBg} h-12`}>
                   <button onClick={kurangJumlah} className="w-10 h-full font-body text-lg hover:bg-[#C77A23]/10 rounded-l-xl transition-all">
@@ -196,7 +178,6 @@ const DetailProduk = ({ isDark }) => {
             </div>
           </section>
 
-          {/* Produk Terkait */}
           {produkTerkait.length > 0 && (
             <section className="mt-16">
               <div className="mb-8">

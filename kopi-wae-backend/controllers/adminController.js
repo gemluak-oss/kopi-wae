@@ -8,7 +8,7 @@ const getDashboardStats = (req, res) => {
   const qPesanan = "SELECT COUNT(*) AS total FROM TRANSAKSI";
   const qProduk = "SELECT COUNT(*) AS total FROM KOPI";
   const qTerbaru = `
-    SELECT t.id_transaksi, u.user_name as pelanggan, t.total_harga, t.status_pesanan, t.tgl_transaksi 
+    SELECT SQL_NO_CACHE t.id_transaksi, u.user_name as pelanggan, t.total_harga, t.status_pesanan, t.tgl_transaksi 
     FROM TRANSAKSI t 
     JOIN USER u ON t.id_user = u.id_user 
     ORDER BY t.tgl_transaksi DESC LIMIT 5
@@ -59,6 +59,8 @@ const tambahKategori = (req, res) => {
   if (!nama_kategori) return res.status(400).json({ pesan: "Nama kategori wajib diisi" });
   db.query("INSERT INTO KATEGORI (nama_kategori) VALUES (?)", [nama_kategori], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal menambah kategori" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("kategoriUpdate", { message: "Kategori ditambahkan" });
     res.status(201).json({ pesan: "Kategori ditambahkan!" });
   });
 };
@@ -67,6 +69,8 @@ const editKategori = (req, res) => {
   const { nama_kategori } = req.body;
   db.query("UPDATE KATEGORI SET nama_kategori = ? WHERE id_kategori = ?", [nama_kategori, req.params.id], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal mengupdate kategori" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("kategoriUpdate", { message: "Kategori diupdate" });
     res.json({ pesan: "Kategori diupdate!" });
   });
 };
@@ -74,6 +78,8 @@ const editKategori = (req, res) => {
 const hapusKategori = (req, res) => {
   db.query("DELETE FROM KATEGORI WHERE id_kategori = ?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal menghapus kategori" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("kategoriUpdate", { message: "Kategori dihapus" });
     res.json({ pesan: "Kategori dihapus!" });
   });
 };
@@ -82,12 +88,7 @@ const hapusKategori = (req, res) => {
 // PRODUK
 // =====================================================================
 const getAllProdukAdmin = (req, res) => {
-  const sql = `
-    SELECT KOPI.*, KATEGORI.nama_kategori 
-    FROM KOPI 
-    JOIN KATEGORI ON KOPI.id_kategori = KATEGORI.id_kategori
-    ORDER BY KOPI.id_kopi DESC
-  `;
+  const sql = `SELECT KOPI.*, KATEGORI.nama_kategori FROM KOPI JOIN KATEGORI ON KOPI.id_kategori = KATEGORI.id_kategori ORDER BY KOPI.id_kopi DESC`;
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ pesan: "Error saat mengambil data produk" });
     res.json({ data: results });
@@ -96,12 +97,12 @@ const getAllProdukAdmin = (req, res) => {
 
 const tambahProduk = (req, res) => {
   const { id_kategori, nama_kopi, deskripsi, harga_kopi, stok, stok_minimal, gambar } = req.body;
-  if (!id_kategori || !nama_kopi || !harga_kopi) {
-    return res.status(400).json({ pesan: "Kategori, nama, dan harga wajib diisi" });
-  }
+  if (!id_kategori || !nama_kopi || !harga_kopi) return res.status(400).json({ pesan: "Kategori, nama, dan harga wajib diisi" });
   const sql = "INSERT INTO KOPI (id_kategori, nama_kopi, deskripsi, harga_kopi, stok, stok_minimal, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
   db.query(sql, [id_kategori, nama_kopi, deskripsi || null, harga_kopi, stok || 0, stok_minimal || 0, gambar || null], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal menambah produk" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("produkUpdate", { message: "Produk ditambahkan" });
     res.status(201).json({ pesan: "Produk berhasil ditambahkan!" });
   });
 };
@@ -111,6 +112,8 @@ const editProduk = (req, res) => {
   const sql = "UPDATE KOPI SET id_kategori=?, nama_kopi=?, deskripsi=?, harga_kopi=?, stok=?, stok_minimal=?, gambar=? WHERE id_kopi=?";
   db.query(sql, [id_kategori, nama_kopi, deskripsi || null, harga_kopi, stok, stok_minimal, gambar || null, req.params.id], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal mengupdate produk" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("produkUpdate", { message: "Produk diupdate" });
     res.json({ pesan: "Produk diupdate!" });
   });
 };
@@ -118,6 +121,8 @@ const editProduk = (req, res) => {
 const hapusProduk = (req, res) => {
   db.query("DELETE FROM KOPI WHERE id_kopi = ?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ pesan: "Gagal menghapus produk" });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) notifySSE("produkUpdate", { message: "Produk dihapus" });
     res.json({ pesan: "Produk dihapus!" });
   });
 };
@@ -128,8 +133,7 @@ const hapusProduk = (req, res) => {
 const getAllPesanan = (req, res) => {
   const query = `
     SELECT t.*, u.user_name as pelanggan, pm.metode_pembayaran
-    FROM TRANSAKSI t 
-    JOIN USER u ON t.id_user = u.id_user 
+    FROM TRANSAKSI t JOIN USER u ON t.id_user = u.id_user 
     LEFT JOIN PEMBAYARAN pm ON t.id_transaksi = pm.id_transaksi
     ORDER BY t.tgl_transaksi DESC
   `;
@@ -144,6 +148,12 @@ const updateStatusPesanan = (req, res) => {
   const { status_pesanan } = req.body;
   db.query("UPDATE TRANSAKSI SET status_pesanan = ? WHERE id_transaksi = ?", [status_pesanan, id], (err) => {
     if (err) return res.status(500).json({ message: "Error", error: err });
+    const notifySSE = req.app.get("notifySSE");
+    if (notifySSE) {
+      notifySSE("statusUpdate", { id_transaksi: id, status_pesanan });
+      notifySSE("pesananUpdate", { message: "Status diupdate" });
+      notifySSE("historyUpdate", { userId: "all" });
+    }
     res.json({ message: "Status diupdate!" });
   });
 };

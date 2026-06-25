@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime";
 
 export default function ManajemenPengguna({ isDark }) {
   const [users, setUsers] = useState([]);
@@ -20,15 +21,27 @@ export default function ManajemenPengguna({ isDark }) {
   useEffect(() => {
     fetchAllUsers();
   }, []);
+
   useEffect(() => {
     if (filterRole === "semua") setUsers(allUsers);
     else setUsers(allUsers.filter((u) => u.role === filterRole));
   }, [filterRole, allUsers]);
 
+  // ✅ SSE: Auto refresh pas ada user CRUD atau profil update
+  useRealtime("userUpdate", () => {
+    fetchAllUsers();
+  });
+
+  useRealtime("profilUpdate", () => {
+    fetchAllUsers();
+  });
+
   const fetchAllUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/users", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get("http://localhost:5000/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setAllUsers(res.data.data);
       setUsers(res.data.data);
       setIsLoading(false);
@@ -42,20 +55,32 @@ export default function ManajemenPengguna({ isDark }) {
     setEditingUser(null);
     setShowModal(true);
   };
+
   const handleEdit = (user) => {
-    setFormData({ user_name: user.user_name, email: user.email, password: "", role: user.role, no_hp: user.no_hp || "", foto: user.foto || "" });
+    setFormData({
+      user_name: user.user_name,
+      email: user.email,
+      password: "",
+      role: user.role,
+      no_hp: user.no_hp || "",
+      foto: user.foto || "",
+    });
     setEditingUser(user);
     setShowModal(true);
   };
+
   const handleDelete = async (id, userName) => {
     if (!window.confirm(`Yakin hapus "${userName}"?`)) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      fetchAllUsers();
+      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // ✅ Ga perlu fetchAllUsers() di sini karena SSE bakal trigger otomatis
     } catch (err) {
       alert(err.response?.data?.message || "Gagal menghapus");
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -63,18 +88,26 @@ export default function ManajemenPengguna({ isDark }) {
       if (!editingUser && !payload.password) return alert("Password wajib diisi");
       if (editingUser && !payload.password) delete payload.password;
       if (editingUser) {
-        await axios.put(`http://localhost:5000/api/admin/users/${editingUser.id_user}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`http://localhost:5000/api/admin/users/${editingUser.id_user}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        await axios.post("http://localhost:5000/api/admin/users", payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post("http://localhost:5000/api/admin/users", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       setShowModal(false);
-      fetchAllUsers();
+      // ✅ Ga perlu fetchAllUsers() di sini karena SSE bakal trigger otomatis
     } catch (err) {
       alert(err.response?.data?.message || "Gagal menyimpan");
     }
   };
 
-  const stats = { total: allUsers.length, admin: allUsers.filter((u) => u.role === "admin").length, user: allUsers.filter((u) => u.role === "user").length };
+  const stats = {
+    total: allUsers.length,
+    admin: allUsers.filter((u) => u.role === "admin").length,
+    user: allUsers.filter((u) => u.role === "user").length,
+  };
 
   if (isLoading)
     return (

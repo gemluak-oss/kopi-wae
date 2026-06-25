@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import useRealtime from "../../hooks/useRealtime"; // ✅ import
 
 const Checkout = ({ isDark }) => {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ const Checkout = ({ isDark }) => {
     fetchKeranjang();
   }, []);
 
+  // ✅ Auto refresh keranjang
+  useRealtime("keranjangUpdate", () => fetchKeranjang());
+
   const fetchKeranjang = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/user/keranjang/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -42,14 +46,14 @@ const Checkout = ({ isDark }) => {
 
   const cekVoucher = async () => {
     if (!kodeVoucher.trim()) {
-      setVoucherMsg({ type: "error", text: "Masukkan kode voucher terlebih dahulu!" });
+      setVoucherMsg({ type: "error", text: "Masukkan kode voucher!" });
       setVoucher(null);
       return;
     }
     try {
       const res = await axios.post("http://localhost:5000/api/user/voucher", { kode: kodeVoucher.toUpperCase(), subtotal, userId: user.id }, { headers: { Authorization: `Bearer ${token}` } });
       setVoucher(res.data.data);
-      setVoucherMsg({ type: "success", text: `Voucher ${res.data.data.kode} berhasil! Diskon Rp ${res.data.data.diskon.toLocaleString("id-ID")}` });
+      setVoucherMsg({ type: "success", text: `Voucher ${res.data.data.kode} berhasil!` });
     } catch (err) {
       setVoucher(null);
       setVoucherMsg({ type: "error", text: err.response?.data?.message || "Voucher tidak valid" });
@@ -92,20 +96,10 @@ const Checkout = ({ isDark }) => {
   const verifyPayment = async () => {
     setIsVerifying(true);
     try {
-      if (voucher) {
-        await axios.put(`http://localhost:5000/api/user/voucher/kurang/${voucher.kode}`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      }
+      if (voucher) await axios.put(`http://localhost:5000/api/user/voucher/kurang/${voucher.kode}`, {}, { headers: { Authorization: `Bearer ${token}` } });
       await axios.post(
         "http://localhost:5000/api/user/checkout",
-        {
-          userId: user.id,
-          metodePembayaran: formData.pembayaran,
-          diskon,
-          voucherKode: voucher?.kode || null,
-          total,
-          subtotal,
-          ongkir,
-        },
+        { userId: user.id, metodePembayaran: formData.pembayaran, diskon, voucherKode: voucher?.kode || null, total, subtotal, ongkir },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       window.dispatchEvent(new Event("keranjangChanged"));
@@ -122,14 +116,10 @@ const Checkout = ({ isDark }) => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
-        .font-serif { font-family: 'Lora', serif; }
-        .font-body { font-family: 'Roboto', sans-serif; }
-        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; font-family: 'Roboto', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-        .caramel-btn:hover { background: #3A2F2B; }
-        .checkout-input { border-radius: 10px; border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease; }
-        .checkout-input:focus { border-color: #C77A23; box-shadow: 0 0 0 3px rgba(199,122,35,0.1); outline: none; }
-        .payment-btn { border-radius: 12px; border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease; }
-        .payment-btn.active { background: #C77A23; color: white; border-color: #C77A23; }
+        .font-serif { font-family: 'Lora', serif; } .font-body { font-family: 'Roboto', sans-serif; }
+        .caramel-btn { background: #C77A23; color: white; border-radius: 10px; transition: all 0.3s ease; } .caramel-btn:hover { background: #3A2F2B; }
+        .checkout-input { border-radius: 10px; border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease; } .checkout-input:focus { border-color: #C77A23; box-shadow: 0 0 0 3px rgba(199,122,35,0.1); outline: none; }
+        .payment-btn { border-radius: 12px; border: 1px solid rgba(199,122,35,0.3); transition: all 0.3s ease; } .payment-btn.active { background: #C77A23; color: white; border-color: #C77A23; }
       `}</style>
 
       <main className={`min-h-screen ${bg} font-body py-16`}>
@@ -143,7 +133,6 @@ const Checkout = ({ isDark }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-12">
             <div className="space-y-12">
-              {/* ALAMAT */}
               <section className={`${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
                 <h2 className="font-serif text-xl font-bold mb-8 text-[#C77A23]">Alamat Pengiriman</h2>
                 <div className="space-y-6">
@@ -166,7 +155,6 @@ const Checkout = ({ isDark }) => {
                 </div>
               </section>
 
-              {/* VOUCHER */}
               <section className={`${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
                 <h2 className="font-serif text-xl font-bold mb-6 text-[#C77A23]">Kode Voucher</h2>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -201,7 +189,6 @@ const Checkout = ({ isDark }) => {
                 )}
               </section>
 
-              {/* PEMBAYARAN */}
               <section className={`${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
                 <h2 className="font-serif text-xl font-bold mb-6 text-[#C77A23]">Pilih Pembayaran</h2>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -217,7 +204,6 @@ const Checkout = ({ isDark }) => {
                 </div>
               </section>
 
-              {/* PRODUK */}
               <section className={`${cardBg} rounded-2xl border ${borderColor} p-8 shadow-xl`}>
                 <h2 className="font-serif text-xl font-bold mb-6 text-[#C77A23]">Produk Dipesan</h2>
                 {items.length === 0 ? (
@@ -239,23 +225,22 @@ const Checkout = ({ isDark }) => {
               </section>
             </div>
 
-            {/* RINGKASAN */}
             <aside className="h-fit sticky top-28">
               <div className={`${cardBg} rounded-2xl border ${borderColor} p-6 shadow-xl`}>
-                <h2 className={`font-serif text-lg font-bold mb-8 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>Ringkasan</h2>
+                <h2 className={`font-serif text-lg font-bold mb-8`}>Ringkasan</h2>
                 <div className="space-y-3 text-xs font-body uppercase mb-6">
                   <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
                     <span className={textMuted}>Subtotal</span>
-                    <span className="font-medium">{formatRupiah(subtotal)}</span>
+                    <span>{formatRupiah(subtotal)}</span>
                   </div>
                   <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
                     <span className={textMuted}>Ongkir</span>
-                    <span className="font-medium">{formatRupiah(ongkir)}</span>
+                    <span>{formatRupiah(ongkir)}</span>
                   </div>
                   {diskon > 0 && (
                     <div className="flex justify-between border-b border-dashed border-[#C77A23]/20 pb-2">
                       <span className={textMuted}>Diskon</span>
-                      <span className="font-medium text-green-500">- {formatRupiah(diskon)}</span>
+                      <span className="text-green-500">- {formatRupiah(diskon)}</span>
                     </div>
                   )}
                 </div>
@@ -276,14 +261,7 @@ const Checkout = ({ isDark }) => {
         {/* MODALS */}
         {[
           { show: showValidationModal, title: "Data Belum Lengkap", msg: validationMessage, onConfirm: () => setShowValidationModal(false) },
-          {
-            show: showPaymentModal,
-            title: "Konfirmasi Pembayaran",
-            msg: `Total: ${formatRupiah(total)} | ${formData.pembayaran}${diskon > 0 ? ` | Diskon: ${formatRupiah(diskon)}` : ""}`,
-            onConfirm: verifyPayment,
-            loading: isVerifying,
-            onCancel: () => setShowPaymentModal(false),
-          },
+          { show: showPaymentModal, title: "Konfirmasi Pembayaran", msg: `Total: ${formatRupiah(total)} | ${formData.pembayaran}`, onConfirm: verifyPayment, loading: isVerifying, onCancel: () => setShowPaymentModal(false) },
           {
             show: showSuccessModal,
             title: "Pesanan Berhasil!",
@@ -298,7 +276,7 @@ const Checkout = ({ isDark }) => {
             m.show && (
               <div key={i} className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-5">
                 <div className={`${cardBg} rounded-2xl border ${borderColor} p-8 max-w-sm w-full text-center shadow-2xl`}>
-                  <h2 className={`font-serif text-xl font-bold mb-2 ${isDark ? "text-[#E8D8C6]" : "text-[#3A2F2B]"}`}>{m.title}</h2>
+                  <h2 className="font-serif text-xl font-bold mb-2">{m.title}</h2>
                   <p className={`text-sm mb-6 ${textMuted}`}>{m.msg}</p>
                   <div className="space-y-3">
                     <button onClick={m.onConfirm} disabled={m.loading} className="caramel-btn w-full h-12 text-xs">
